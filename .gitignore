@@ -64,3 +64,6 @@ temp
 
 # Private working notes (AI-written md files, never published)
 /notes/
+
+# /ship release ledger (local verdicts)
+.ship/
