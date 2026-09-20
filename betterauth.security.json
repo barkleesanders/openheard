@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "profile": "password-magic-link",
+  "authFile": "packages/auth/src/index.ts",
+  "snapshotPaths": [
+    "packages/auth/src",
+    "packages/auth/vitest.config.ts",
+    "packages/auth/package.json",
+    "packages/auth/tsconfig.json",
+    "packages/db/migrations"
+  ],
+  "tests": [
+    "packages/auth/src/security.test.ts"
+  ],
+  "vitestConfig": "packages/auth/vitest.config.ts",
+  "mutations": [
+    {
+      "id": "delivery-failure",
+      "file": "packages/auth/src/index.ts",
+      "from": "        delivery.assertDelivered();",
+      "to": "        // negative control: swallowed delivery failure is ignored",
+      "test": "email delivery failures reach the HTTP caller password reset request returns a generic 503 when the mailer fails"
+    },
+    {
+      "id": "magic-link-delivery",
+      "file": "packages/auth/src/index.ts",
+      "from": "      failed = true;\n      const message = err instanceof Error ? err.message : String(err);\n      console.error(JSON.stringify({ event: \"auth_email\", flow, ok: false, error: message.slice(0, 200) }));\n      throw new AuthEmailDeliveryError();",
+      "to": "      const message = err instanceof Error ? err.message : String(err);\n      console.error(JSON.stringify({ event: \"auth_email\", flow, ok: false, error: message.slice(0, 200) }));\n      // negative control: magic-link failures are swallowed like upstream\n      if (flow === \"reset_password\") { failed = true; throw new AuthEmailDeliveryError(); }",
+      "test": "email delivery failures reach the HTTP caller magic link request returns a generic 503 when the mailer fails"
+    },
+    {
+      "id": "magic-link-storage",
+      "file": "packages/auth/src/index.ts",
+      "from": "        storeToken: \"hashed\",",
+      "to": "        storeToken: \"plain\",",
+      "test": "magic link storage persists only a hash of the emailed token and redeems it exactly once"
+    },
+    {
+      "id": "trusted-origins",
+      "file": "packages/auth/src/index.ts",
+      "from": "    trustedOrigins: [env.BETTER_AUTH_URL, ",
+      "to": "    trustedOrigins: [\"https://attacker.invalid\", env.BETTER_AUTH_URL, ",
+      "test": "origins and disabled methods rejects a sign-out from an untrusted origin"
+    },
+    {
+      "id": "origin-check",
+      "file": "packages/auth/src/index.ts",
+      "from": "      disableOriginCheck: false,",
+      "to": "      disableOriginCheck: true,",
+      "test": "origins and disabled methods rejects a sign-out from an untrusted origin"
+    },
+    {
+      "id": "session-cache-bound",
+      "file": "packages/auth/src/index.ts",
+      "from": "        maxAge: 300,",
+      "to": "        maxAge: 86400,",
+      "test": "sessions caches the session in a signed cookie for at most five minutes"
+    },
+    {
+      "id": "sign-in-rate-limit",
+      "file": "packages/auth/src/index.ts",
+      "from": "        \"/sign-in/*\": { window: 60, max: 5 },",
+      "to": "        \"/sign-in/*\": { window: 60, max: 500 },",
+      "test": "sessions rate limits password sign-in attempts within one instance"
+    }
+  ]
+}

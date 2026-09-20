@@ -72,6 +72,28 @@ Templates live in `packages/infra/instances/` (named `*.env-example` so no
 `ROOT_DOMAIN`. A different secret per instance; never commit one
 (`.gitignore` ignores `.env.*` and keeps only `*.example`).
 
+## 2b. Auth security gate **[ship, blocking]**
+
+Better Auth 1.7.1 swallows sender failures (`runInBackgroundOrAwait` in
+`better-auth/dist/context/create-context.mjs`), so the fork records the delivery
+outcome per request and turns it into a 503 in `hooks.after`; magic-link tokens
+are stored hashed; the Origin gate is explicit. `betterauth.security.json` at the
+repo root is the executable contract (profile `password-magic-link`, 10 real-SDK
+assertions, 7 named source mutations). Run before every deploy, as its own command:
+
+```bash
+bun run gate:auth-security                                  # the contract tests (any machine)
+node "$HOME/tools/betterauth/betterauth" security --repo "$PWD" --json   # + mutation run; exit 0 only
+```
+
+Auth mail is sent from `AUTH_EMAIL_FROM` (per-instance env). Cloudflare Email
+Sending must be enabled for that address's domain — verified 2026-09-20 with
+`wrangler email sending list`: `notifications.aivaclaims.com`,
+`notifications.improvebayarea.com`, `notifications.improvecortland.com` are
+enabled; the apexes are not, and `hello@openheard.com` (upstream's default) would
+fail on every instance. `bun run deploy:instance` runs the gate then
+`alchemy deploy --stage prod`.
+
 ## 3. Deploy, one instance at a time **[ship]**
 
 Stage is `prod`, matching upstream's `.github/workflows/deploy.yml`

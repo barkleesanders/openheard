@@ -65,6 +65,11 @@ export const web = Cloudflare.Website.Vite("web", {
     BETTER_AUTH_SECRET: Config.redacted("BETTER_AUTH_SECRET"),
     BETTER_AUTH_URL: Config.string("BETTER_AUTH_URL").pipe(Config.withDefault("")),
     ROOT_DOMAIN: Config.string("ROOT_DOMAIN").pipe(Config.withDefault("")),
+    // Sender for auth mail (password reset, magic link). Must be an address on a
+    // domain the account has enabled for Cloudflare Email Sending
+    // (`wrangler email sending list`); blank falls back to hello@openheard.com.
+    AUTH_EMAIL_FROM: Config.string("AUTH_EMAIL_FROM").pipe(Config.withDefault("")),
+    AUTH_EMAIL_FROM_NAME: Config.string("AUTH_EMAIL_FROM_NAME").pipe(Config.withDefault("")),
     GOOGLE_CLIENT_ID: Config.string("GOOGLE_CLIENT_ID").pipe(Config.withDefault("")),
     GOOGLE_CLIENT_SECRET: Config.string("GOOGLE_CLIENT_SECRET").pipe(Config.withDefault("")),
     STRIPE_SECRET_KEY: Config.string("STRIPE_SECRET_KEY").pipe(Config.withDefault("")),
