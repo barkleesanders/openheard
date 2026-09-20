@@ -120,6 +120,18 @@ contact in [SECURITY.md](SECURITY.md), not the issue tracker.
 Built in the open for [The Build Games](https://canivibecodeit.com/thebuildgames),
 September 2026.
 
+## Fork notice (AGPL-3.0 section 13)
+
+`github.com/barkleesanders/openheard` is a modified fork of
+[Heilonng23/openheard](https://github.com/Heilonng23/openheard), run as a
+network service for three sites: feedback.aivaclaims.com,
+feedback.improvebayarea.com and feedback.improvecortland.com. The complete
+corresponding source of the version in service is this repository; the
+modifications are `git log upstream/main..HEAD` (with
+`upstream = https://github.com/Heilonng23/openheard`) and are described in
+[docs/self-host-improve-network.md](docs/self-host-improve-network.md).
+Upstream authorship, copyright and licence are unchanged.
+
 ## License
 
 The app (`apps/web`, `packages/db`, `packages/auth`, `packages/ui`) is
