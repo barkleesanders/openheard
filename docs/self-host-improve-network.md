@@ -214,6 +214,17 @@ Connect button performs a live `GET` with `Authorization: Bearer <key>` and no
 transport; `apps/web/src/routes/api/mcp.ts` now answers 200 JSON
 (`apps/web/src/lib/mcp-route.test.ts`). Repeat for all three instances.
 
+### 8b. Nova daily triage job **[hand or muse-ask]**
+
+Once all three connectors show connected, send Nova the prompt in
+[`muse-nova-triage-job.md`](muse-nova-triage-job.md) — either paste it into the
+Nova chat or run `muse-ask "$(cat docs/muse-nova-triage-job.md)"` from a
+machine where `muse-bridge` is up. Then confirm it landed: the prompt's job id
+`openheard-feedback-triage` must appear in the chat DOM (the bridge's
+"submitted" ack alone is not proof). The job is read-mostly: it may
+`draft_changelog`, and never calls `set_status`, `add_comment` or
+`publish_changelog` without an explicit go in chat.
+
 ## 9. Update runbook after shipping **[ship]**
 
 Record the three Worker URLs, D1 ids and the config-rule ids in this file's
