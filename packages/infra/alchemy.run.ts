@@ -51,7 +51,10 @@ export const email = Cloudflare.Email.SendEmail("EMAIL");
 
 export const web = Cloudflare.Website.Vite("web", {
   rootDir: "../../apps/web",
-  ...(domain ? { domain } : {}),
+  // With a custom domain the workers.dev URL is a second public origin that
+  // Better Auth would refuse anyway (not in trustedOrigins); close it and the
+  // version previews so the app has exactly one host.
+  ...(domain ? { domain, workersDev: false } : {}),
   placement: { region: "aws:us-west-2" },
   compatibility: {
     flags: ["nodejs_compat"],

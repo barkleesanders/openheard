@@ -251,3 +251,27 @@ machine where `muse-bridge` is up. Then confirm it landed: the prompt's job id
 
 Record the three Worker URLs, D1 ids and the config-rule ids in this file's
 Verified-facts table, with the date.
+
+### Shipped 2026-09-20 (branch `feat/improve-network-self-host` @ 5ee0739 + workersDev fix)
+
+`bunx alchemy deploy --stage prod --yes` from `packages/infra` with
+`CLOUDFLARE_ACCOUNT_ID` + `CI=1` (env credentials `CLOUDFLARE_API_KEY` /
+`CLOUDFLARE_EMAIL`); the first run bootstrapped the account state store
+(`alchemy-state-store` Worker) itself because `--yes` was passed. Every physical
+name below is `openheard-<instance>-<id>-prod-<suffix>`.
+
+| Instance | Host | Worker | D1 | KV `CACHE` | BIC config rule (`http_config_settings`) |
+|---|---|---|---|---|---|
+| aiva | https://feedback.aivaclaims.com | `openheard-aiva-web-prod-xug64f53dohozicp` | `openheard-aiva-database-prod-tjv4umduaklkrubb` (`9939961f-cb85-4513-91a7-835958bd43cc`) | `08023673d948407797ccde43ef3ccb93` | ruleset `b6f0e5167a4e49ef95ded6f5001ec245` rule `1ba480f324554aa48056d9bcde8fbe89` (`http.host eq "feedback.aivaclaims.com"`, appended after the 2 existing rules) |
+| iba | https://feedback.improvebayarea.com | `openheard-iba-web-prod-i2ekfhbs5qpz5seq` | `openheard-iba-database-prod-ofx6kwjzhpez7yxo` (`5ea722ee-6a4e-4095-b729-907a137160bf`) | `fb686d9cdbcd4d429de7fb5ddad03e8f` | ruleset `520949b1cb18405081861c2fe515ed19` rule `666475abace64967b45a57fae3972f0b` (new entrypoint) |
+| cortland | https://feedback.improvecortland.com | `openheard-cortland-web-prod-k3yhtxptkaui3qc6` | `openheard-cortland-database-prod-i24yytxrsd6wpunt` (`f72f55e6-16f9-48b0-bb49-20628d08ef79`) | `234741b62d084104aa7c3ae073ea38d4` | ruleset `fd344eb4dc9c4d75afb0a75627f9e56f` rule `2711c2a86a244d96a38835a9b4d3481d` (new entrypoint) |
+
+Measured after deploy (curl, 2026-09-20): every host `/` 200, `/api/mcp` 401
+`{"error":"Missing or invalid Authorization header…"}`; with
+`-A 'Python-urllib/3.12'` `/api/mcp` was 403 (BIC) before the rule and 401 after
+(positive control), while the three apex sites still answer 403 to that UA
+(negative control). `workersDev: false` in `alchemy.run.ts` (set whenever a
+custom domain is configured) closed the `<worker>.barkleesanders.workers.dev`
+origins — `enabled:false, previews_enabled:false`, URL 404 — so each instance
+has exactly one host. Follow-up: HOME bead on the reset-password 503 vs 200
+enumeration oracle during mailer outages (security review, Low, conf 7/10).
