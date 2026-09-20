@@ -43,6 +43,9 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
       { rel: "preload", href: geistLatinFont, as: "font", type: "font/woff2", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      // Safari, bookmarks and crawlers request /favicon.ico regardless of the SVG link
+      // (rasterized from favicon.svg by ~/tools/favicon-pack; live 404 on 2026-09-20).
+      { rel: "icon", href: "/favicon.ico", sizes: "16x16 32x32 48x48" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
     // Analytics only when a client id is set at build time, so self-hosters send nothing by default.
