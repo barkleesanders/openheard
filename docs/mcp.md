@@ -6,6 +6,22 @@ The MCP server exposes the same capabilities as the REST API as [Model Context P
 **Transport:** Streamable HTTP (stateless)
 **Auth:** Same `Bearer` API key as the REST API
 
+## Connectivity probe
+
+A plain authenticated `GET /api/mcp` (no `Accept: text/event-stream`) returns
+`200 application/json` with server info instead of the transport's `406`:
+
+```bash
+curl -s https://your-domain.com/api/mcp -H "Authorization: Bearer oh_your_key_here"
+# {"name":"openheard","version":"0.1.0","transport":"streamable-http","tools":[...],"docs":"..."}
+```
+
+Agent hosts that test a connector with a bare GET before speaking JSON-RPC
+(Muse custom connectors, uptime checks) treat any non-2xx as "failed to
+connect"; this is the answer they need. A missing or unknown key is still `401`
+and the rate limit still applies. A GET that does accept `text/event-stream`
+opens the SDK's SSE stream as before; `POST` and `DELETE` are unchanged.
+
 ## Rate limits
 
 The MCP endpoint is rate-limited to **60 requests per minute** per API key (or per IP if no key is provided). Exceeding the limit returns HTTP `429` with a `Retry-After` header indicating seconds until the window resets.

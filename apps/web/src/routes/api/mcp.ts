@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { authenticateApiKey, apiErrorResponse } from "@/lib/api-auth";
+import { authenticateApiKey, apiErrorResponse, apiJson } from "@/lib/api-auth";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import {
   queryListPosts,
@@ -17,10 +17,29 @@ import {
 } from "@/lib/api-actions";
 import { z } from "zod";
 
+const MCP_SERVER_NAME = "openheard";
+const MCP_SERVER_VERSION = "0.1.0";
+const MCP_DOCS_URL = "https://github.com/Heilonng23/openheard/blob/main/docs/mcp.md";
+
+// Kept in step with the server.tool() registrations below; the route test
+// checks the two lists agree.
+const MCP_TOOL_NAMES = [
+  "list_posts",
+  "get_post",
+  "create_post",
+  "set_status",
+  "add_comment",
+  "list_statuses",
+  "list_boards",
+  "list_changelog",
+  "draft_changelog",
+  "publish_changelog",
+] as const;
+
 function createMcpServer(workspaceId: string, db: Parameters<typeof queryListPosts>[0]) {
   const server = new McpServer({
-    name: "openheard",
-    version: "0.1.0",
+    name: MCP_SERVER_NAME,
+    version: MCP_SERVER_VERSION,
   });
 
   server.tool(
@@ -161,6 +180,23 @@ async function handleMcp(request: Request): Promise<Response> {
     if (!rl.allowed) return rateLimitResponse(rl.retryAfter!);
 
     const ctx = await authenticateApiKey(request);
+
+    // A plain GET is a connectivity probe, not an SSE subscription. Agent
+    // hosts (Muse custom connectors, uptime checks) send `Authorization:
+    // Bearer <key>` with no `Accept: text/event-stream` and take any non-2xx
+    // as "failed to connect". The SDK would answer 406 here; answer with
+    // server info instead. A GET that does accept an event stream goes to the
+    // transport untouched.
+    if (request.method === "GET" && !request.headers.get("accept")?.includes("text/event-stream")) {
+      return apiJson({
+        name: MCP_SERVER_NAME,
+        version: MCP_SERVER_VERSION,
+        transport: "streamable-http",
+        tools: MCP_TOOL_NAMES,
+        docs: MCP_DOCS_URL,
+      });
+    }
+
     const server = createMcpServer(ctx.workspaceId, ctx.db);
     const transport = new WebStandardStreamableHTTPServerTransport({
       sessionIdGenerator: undefined,

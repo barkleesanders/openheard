@@ -2,9 +2,11 @@ import { createDb } from "@openheard/db";
 import * as schema from "@openheard/db/schema/auth";
 import { DEFAULT_STATUSES, membership, status, workspace } from "@openheard/db/schema/feedback";
 import { env } from "@openheard/env/server";
-import { betterAuth, type SecondaryStorage } from "better-auth";
+import { betterAuth, type BetterAuthOptions, type SecondaryStorage } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { magicLink } from "better-auth/plugins";
+import { magicLinkEmail, passwordResetEmail } from "./email-template";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { eq } from "drizzle-orm";
 
@@ -42,19 +44,75 @@ function createKvSecondaryStorage(store: KV): SecondaryStorage {
   };
 }
 
-const AUTH_FROM = { email: "hello@openheard.com", name: "openheard" };
+// Cloudflare Email Sending binding (alchemy.run.ts `Cloudflare.Email.SendEmail`).
+// Sending from a domain the account has not enabled for Email Sending fails,
+// so self-hosters set AUTH_EMAIL_FROM to an address on an enabled (sub)domain.
+type AuthMailer = {
+  send(message: { to: string; from: { email: string; name: string }; subject: string; html: string; text: string }): Promise<unknown>;
+};
 
-async function authSendEmail(to: string, subject: string, html: string, text: string) {
-  try {
-    if ((env as any).EMAIL) {
-      const result = await (env as any).EMAIL.send({ to, from: AUTH_FROM, subject, html, text });
-      console.log(`[auth] email sent: ${subject} → ${to}`, result?.messageId ?? "");
-    } else {
-      console.log(`[auth] ${subject} → ${to}\n  ${text.replace(/\n/g, "\n  ")}`);
-    }
-  } catch (err: any) {
-    console.error("[auth] email send failed:", err.message ?? err);
+export const DEFAULT_AUTH_FROM = { email: "hello@openheard.com", name: "openheard" };
+
+function authFrom(): { email: string; name: string } {
+  const e = env as unknown as { AUTH_EMAIL_FROM?: string; AUTH_EMAIL_FROM_NAME?: string };
+  const email = e.AUTH_EMAIL_FROM?.trim();
+  if (!email) return DEFAULT_AUTH_FROM;
+  return { email, name: e.AUTH_EMAIL_FROM_NAME?.trim() || DEFAULT_AUTH_FROM.name };
+}
+
+export type AuthEmailFlow = "reset_password" | "magic_link";
+
+export class AuthEmailDeliveryError extends APIError {
+  constructor() {
+    super("SERVICE_UNAVAILABLE", {
+      code: "AUTH_EMAIL_DELIVERY_FAILED",
+      message: "Unable to send authentication email. Please try again shortly.",
+    });
   }
+}
+
+// Request-scoped delivery outcome. createAuth() runs once per request
+// (apps/web/src/routes/api/auth/$.ts), so this closure never outlives one.
+//
+// Better Auth 1.7.1 wraps every sender in runInBackgroundOrAwait
+// (better-auth/dist/context/create-context.mjs), which catches and logs a
+// rejected sender promise and lets the endpoint report success. A thrown
+// error therefore never reaches the HTTP caller on its own: the sender records
+// the failure here and the `hooks.after` middleware converts it into a
+// generic, retryable 503 before any success or session signal leaves.
+export function createAuthEmailDelivery(mailer: AuthMailer | undefined, from: { email: string; name: string }) {
+  let failed = false;
+
+  async function send(flow: AuthEmailFlow, to: string, subject: string, html: string, text: string) {
+    if (!mailer) {
+      // Local development has no Email binding: print the link/code so the
+      // flow can be completed from the terminal.
+      console.log(`[auth] ${subject} → ${to}\n  ${text.replace(/\n/g, "\n  ")}`);
+      return;
+    }
+    try {
+      const result = (await mailer.send({ to, from, subject, html, text })) as
+        | { messageId?: string; success?: boolean; error?: unknown }
+        | null
+        | undefined;
+      if (result && (result.success === false || result.error)) {
+        throw new Error("mailer reported failure");
+      }
+      // Structured and PII-free: never the address, the link or the code.
+      console.log(JSON.stringify({ event: "auth_email", flow, ok: true, messageId: result?.messageId ?? null }));
+    } catch (err) {
+      failed = true;
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(JSON.stringify({ event: "auth_email", flow, ok: false, error: message.slice(0, 200) }));
+      throw new AuthEmailDeliveryError();
+    }
+  }
+
+  function assertDelivered() {
+    if (failed) throw new AuthEmailDeliveryError();
+  }
+
+  return { send, assertDelivered };
 }
 
 // The demo workspace signs everyone into one shared account. Its cookies get
@@ -73,13 +131,21 @@ export function createAuth(opts?: { demo?: boolean }) {
   const googleSecret = (env as unknown as { GOOGLE_CLIENT_SECRET?: string }).GOOGLE_CLIENT_SECRET;
 
   const kvStore = (env as unknown as { CACHE?: KV }).CACHE;
+  const from = authFrom();
+  const delivery = createAuthEmailDelivery((env as unknown as { EMAIL?: AuthMailer }).EMAIL, from);
+
+  const cookieAdvanced: NonNullable<BetterAuthOptions["advanced"]> = opts?.demo
+    ? { cookiePrefix: DEMO_COOKIE_PREFIX }
+    : rootDomain
+      ? { crossSubDomainCookies: { enabled: true, domain: "." + rootDomain } }
+      : {};
 
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: "sqlite",
       schema: schema,
     }),
-    ...(kvStore ? { secondaryStorage: createKvSecondaryStorage(kvStore) } : {}),
+    secondaryStorage: kvStore ? createKvSecondaryStorage(kvStore) : undefined,
     rateLimit: {
       enabled: true,
       window: 60,
@@ -92,7 +158,10 @@ export function createAuth(opts?: { demo?: boolean }) {
       },
     },
     advanced: {
-      ...(opts?.demo ? { cookiePrefix: DEMO_COOKIE_PREFIX } : rootDomain ? { crossSubDomainCookies: { enabled: true, domain: "." + rootDomain } } : {}),
+      ...cookieAdvanced,
+      // Explicit so the Origin/CSRF gate behaves identically in tests and
+      // production (Better Auth skips it under NODE_ENV=test when unset).
+      disableOriginCheck: false,
       ipAddress: {
         ipAddressHeaders: ["cf-connecting-ip", "x-forwarded-for"],
       },
@@ -104,18 +173,12 @@ export function createAuth(opts?: { demo?: boolean }) {
       },
     },
     trustedOrigins: [env.BETTER_AUTH_URL, ...(raw ? [`https://*.${raw}`, `http://*.${raw}`, `http://*.${raw}:*`] : [])],
-    ...(googleId && googleSecret
-      ? { socialProviders: { google: { clientId: googleId, clientSecret: googleSecret } } }
-      : {}),
+    socialProviders: googleId && googleSecret ? { google: { clientId: googleId, clientSecret: googleSecret } } : {},
     emailAndPassword: {
       enabled: true,
       sendResetPassword: async ({ user, url }) => {
-        await authSendEmail(
-          user.email,
-          "Reset your password",
-          `<p>Click to reset your password. Expires in 1 hour.</p><p><a href="${url}">${url}</a></p>`,
-          `Reset your password: ${url}`,
-        );
+        const mail = passwordResetEmail(url, from.name);
+        await delivery.send("reset_password", user.email, mail.subject, mail.html, mail.text);
       },
     },
     user: {
@@ -151,11 +214,20 @@ export function createAuth(opts?: { demo?: boolean }) {
         },
       },
     },
+    hooks: {
+      after: createAuthMiddleware(async () => {
+        // Surface a swallowed sender failure before the endpoint's success body.
+        delivery.assertDelivered();
+      }),
+    },
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL || undefined,
     plugins: [
       tanstackStartCookies(),
       magicLink({
+        // Only a hash of the emailed token is persisted; the verification row
+        // cannot be replayed if the database leaks.
+        storeToken: "hashed",
         sendMagicLink: async ({ email, url }, ctx?) => {
           let link = url;
           // Better Auth builds the link from baseURL (the apex). Rewrite the
@@ -168,12 +240,8 @@ export function createAuth(opts?: { demo?: boolean }) {
               link = url.replace(baseOrigin, reqOrigin);
             }
           }
-          await authSendEmail(
-            email,
-            "Your sign-in link",
-            `<p>Click to sign in. Expires in 5 minutes.</p><p><a href="${link}">${link}</a></p>`,
-            `Sign in: ${link}`,
-          );
+          const mail = magicLinkEmail(link, from.name);
+          await delivery.send("magic_link", email, mail.subject, mail.html, mail.text);
         },
       }),
     ],
