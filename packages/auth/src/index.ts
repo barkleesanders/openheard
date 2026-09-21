@@ -6,6 +6,7 @@ import { betterAuth, type BetterAuthOptions, type SecondaryStorage } from "bette
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { magicLink } from "better-auth/plugins";
+import { magicLinkEmail, passwordResetEmail } from "./email-template";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { eq } from "drizzle-orm";
 
@@ -130,7 +131,8 @@ export function createAuth(opts?: { demo?: boolean }) {
   const googleSecret = (env as unknown as { GOOGLE_CLIENT_SECRET?: string }).GOOGLE_CLIENT_SECRET;
 
   const kvStore = (env as unknown as { CACHE?: KV }).CACHE;
-  const delivery = createAuthEmailDelivery((env as unknown as { EMAIL?: AuthMailer }).EMAIL, authFrom());
+  const from = authFrom();
+  const delivery = createAuthEmailDelivery((env as unknown as { EMAIL?: AuthMailer }).EMAIL, from);
 
   const cookieAdvanced: NonNullable<BetterAuthOptions["advanced"]> = opts?.demo
     ? { cookiePrefix: DEMO_COOKIE_PREFIX }
@@ -175,13 +177,8 @@ export function createAuth(opts?: { demo?: boolean }) {
     emailAndPassword: {
       enabled: true,
       sendResetPassword: async ({ user, url }) => {
-        await delivery.send(
-          "reset_password",
-          user.email,
-          "Reset your password",
-          `<p>Click to reset your password. Expires in 1 hour.</p><p><a href="${url}">${url}</a></p>`,
-          `Reset your password: ${url}`,
-        );
+        const mail = passwordResetEmail(url, from.name);
+        await delivery.send("reset_password", user.email, mail.subject, mail.html, mail.text);
       },
     },
     user: {
@@ -243,13 +240,8 @@ export function createAuth(opts?: { demo?: boolean }) {
               link = url.replace(baseOrigin, reqOrigin);
             }
           }
-          await delivery.send(
-            "magic_link",
-            email,
-            "Your sign-in link",
-            `<p>Click to sign in. Expires in 5 minutes.</p><p><a href="${link}">${link}</a></p>`,
-            `Sign in: ${link}`,
-          );
+          const mail = magicLinkEmail(link, from.name);
+          await delivery.send("magic_link", email, mail.subject, mail.html, mail.text);
         },
       }),
     ],

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "brand": "openheard",
+  "paper": "#f7f5f0",
+  "ink": "#141416",
+  "accent": "#141416",
+  "senders": ["packages/auth/src/index.ts", "packages/auth/src/email-template.ts", "apps/web/src/lib/email.ts"],
+  "tests": ["packages/auth/src/email-design.test.ts", "apps/web/src/lib/email.test.ts"],
+  "command": ["bun", "run", "test:email-design"]
+}

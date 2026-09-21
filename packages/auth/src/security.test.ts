@@ -129,7 +129,7 @@ describe("magic link storage", () => {
   it("persists only a hash of the emailed token and redeems it exactly once", async () => {
     const res = await post(createAuth(), "/sign-in/magic-link", { email: USER.email, callbackURL: "/welcome" });
     expect(res.status).toBe(200);
-    const url = new URL(mailer.sent[0]?.text.replace(/^Sign in: /, "") ?? "");
+    const url = new URL(mailer.sent[0]?.text.match(/https?:\/\/\S+/)?.[0] ?? "");
     const token = url.searchParams.get("token");
     expect(token).toBeTruthy();
     const rows = await testEnv.DB_LOCAL!.select().from(schema.verification);
