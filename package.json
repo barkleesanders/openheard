@@ -62,7 +62,7 @@
     "db:seed": "OPENHEARD_LOCAL=1 bun run --filter web seed",
     "demo:reset": "OPENHEARD_LOCAL=1 bun run --filter web demo:reset",
     "gate:auth-security": "vitest run --config packages/auth/vitest.config.ts",
-    "deploy:instance": "bun run gate:auth-security && bun run test:email-design && cd packages/infra && bunx alchemy deploy --stage prod",
+    "deploy:instance": "bun run gate:auth-security && bun run test:email-design && cd packages/infra && bunx alchemy deploy --stage prod --yes",
     "test:email-design": "vitest run --config packages/auth/vitest.config.ts src/email-design.test.ts && cd apps/web && vitest run src/lib/email.test.ts"
   },
   "dependencies": {
