@@ -1,7 +1,20 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
 import { createRequire } from "node:module";
 import { test } from "node:test";
+
+test("Alchemy platform packages load with its pinned Effect runtime", () => {
+  execFileSync(
+    "bun",
+    ["-e", 'await import("@effect/platform-bun/BunServices"); await import("@effect/platform-node/NodeServices");'],
+    {
+      cwd: new URL("../packages/infra", import.meta.url),
+      stdio: "pipe",
+      timeout: 20000,
+    },
+  );
+});
 
 const consumers = [
   ["Alchemy", "../packages/infra/node_modules/alchemy"],
