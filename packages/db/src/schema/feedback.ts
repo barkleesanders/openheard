@@ -424,3 +424,29 @@ export const notificationDelivery = sqliteTable(
     ),
   ],
 );
+
+export const notificationSubscription = sqliteTable(
+  "notification_subscription",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspace.id, { onDelete: "cascade" }),
+    scopeKey: text("scope_key").notNull(),
+    postId: integer("post_id").references(() => post.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    tokenHash: text("token_hash"),
+    tokenExpiresAt: integer("token_expires_at", { mode: "timestamp_ms" }),
+    confirmedAt: integer("confirmed_at", { mode: "timestamp_ms" }),
+    unsubscribedAt: integer("unsubscribed_at", { mode: "timestamp_ms" }),
+    lastRequestedAt: integer("last_requested_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (t) => [
+    uniqueIndex("notification_subscription_recipient_idx").on(t.workspaceId, t.scopeKey, t.email),
+    index("notification_subscription_confirmed_idx").on(t.workspaceId, t.confirmedAt, t.unsubscribedAt),
+    check(
+      "notification_subscription_scope",
+      sql`(${t.scopeKey} = 'changelog' AND ${t.postId} IS NULL) OR (${t.postId} IS NOT NULL AND ${t.scopeKey} = 'post:' || ${t.postId})`,
+    ),
+  ],
+);
