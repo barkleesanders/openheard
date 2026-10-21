@@ -101,14 +101,12 @@ describe("resetDemoWorkspace", () => {
 
   it("wipes what a visitor made and comes back to the same seed", async () => {
     const before = await db.select().from(schema.post).where(eq(schema.post.workspaceId, DEMO_WORKSPACE_ID));
-    await db
-      .insert(schema.post)
-      .values({
-        workspaceId: DEMO_WORKSPACE_ID,
-        boardId: `${DEMO_WORKSPACE_ID}-bugs`,
-        title: "Visitor noise",
-        body: "",
-      });
+    await db.insert(schema.post).values({
+      workspaceId: DEMO_WORKSPACE_ID,
+      boardId: `${DEMO_WORKSPACE_ID}-bugs`,
+      title: "Visitor noise",
+      body: "",
+    });
     await db
       .insert(schema.membership)
       .values({ workspaceId: DEMO_WORKSPACE_ID, userId: "acme-owner-2", role: "admin" })

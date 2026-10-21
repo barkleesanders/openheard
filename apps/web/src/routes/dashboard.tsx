@@ -66,7 +66,12 @@ function AdminLayout() {
       {/* Mobile sidebar sheet */}
       {mobileOpen ? (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
+          <button
+            type="button"
+            aria-label="Close menu"
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setMobileOpen(false)}
+          />
           <aside className="absolute inset-y-0 left-0 w-60 bg-[#0a0a0b] shadow-lg animate-in slide-in-from-left duration-200">
             <AdminSidebar
               onNewPost={() => {

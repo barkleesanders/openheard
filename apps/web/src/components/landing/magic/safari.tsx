@@ -43,6 +43,7 @@ export function Safari({ imageSrc, url, className, style, ...props }: SafariProp
       )}
 
       <svg
+        aria-hidden="true"
         viewBox={`0 0 ${SAFARI_WIDTH} ${SAFARI_HEIGHT}`}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

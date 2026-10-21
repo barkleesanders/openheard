@@ -7,6 +7,7 @@ import {
   WarningCircleIcon,
 } from "@phosphor-icons/react";
 import { useState } from "react";
+import { LabeledInput } from "./labeled-input";
 
 // The one workspace form. "create" asks for a subdomain and makes a new
 // workspace; "setup" fills in an existing one (first run on a self-hosted
@@ -94,7 +95,7 @@ export function WorkspaceForm({
       <div className="flex flex-col gap-5">
         <Field label="Website" optional>
           <div className="flex items-center gap-2.5">
-            <FieldBox icon={<GlobeSimpleIcon className="size-[15px]" />}>
+            <FieldBox label="Website" icon={<GlobeSimpleIcon className="size-[15px]" />}>
               <input
                 type="text"
                 inputMode="url"
@@ -110,7 +111,7 @@ export function WorkspaceForm({
 
         <Field label="Workspace name">
           <div className="flex items-center gap-2.5">
-            <FieldBox icon={<MonitorIcon className="size-[15px]" />}>
+            <FieldBox label="Workspace name" icon={<MonitorIcon className="size-[15px]" />}>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -129,7 +130,7 @@ export function WorkspaceForm({
           <Field label="Subdomain">
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center gap-2.5">
-                <FieldBox icon={<LinkSimpleIcon className="size-[15px]" />}>
+                <FieldBox label="Subdomain" icon={<LinkSimpleIcon className="size-[15px]" />}>
                   <input
                     value={slugTouched ? slug : finalSlug}
                     onChange={(e) => {
@@ -197,11 +198,14 @@ function Field({ label, optional, children }: { label: string; optional?: boolea
   );
 }
 
-function FieldBox({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+function FieldBox({ icon, children, label }: { icon: React.ReactNode; children: React.ReactNode; label: string }) {
   return (
-    <label className="flex h-10 flex-1 items-center gap-2.5 rounded-lg border border-input bg-card px-3 text-faint transition-colors focus-within:border-ring/60 focus-within:ring-1 focus-within:ring-ring/40">
-      {icon}
+    <LabeledInput
+      label={label}
+      icon={icon}
+      className="flex h-10 flex-1 items-center gap-2.5 rounded-lg border border-input bg-card px-3 text-faint transition-colors focus-within:border-ring/60 focus-within:ring-1 focus-within:ring-ring/40"
+    >
       {children}
-    </label>
+    </LabeledInput>
   );
 }

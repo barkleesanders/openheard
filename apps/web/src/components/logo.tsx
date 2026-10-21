@@ -10,7 +10,7 @@ export default function Logo({ size = 24 }: { size?: number }) {
       style={{ width: w, height: h }}
       aria-hidden
     >
-      <svg width={w} height={h} viewBox="173 269 715 501" fill="currentColor">
+      <svg aria-hidden="true" width={w} height={h} viewBox="173 269 715 501" fill="currentColor">
         <g transform="translate(0,1024) scale(0.1,-0.1)">
           <path d={MARK_D} />
         </g>

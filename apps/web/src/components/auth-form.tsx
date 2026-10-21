@@ -4,11 +4,24 @@ import { EnvelopeSimpleIcon, LockSimpleIcon, MagicWandIcon, UserIcon } from "@ph
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { GoogleIcon } from "@/components/icons";
+import { LabeledInput } from "@/components/labeled-input";
 import { authClient } from "@/lib/auth-client";
 
-function Field({ icon, children, invalid }: { icon: React.ReactNode; children: React.ReactNode; invalid?: boolean }) {
+function Field({
+  icon,
+  children,
+  invalid,
+  label,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactElement<{ id?: string }>;
+  invalid?: boolean;
+  label: string;
+}) {
   return (
-    <label
+    <LabeledInput
+      label={label}
+      icon={icon}
       className={cn(
         "flex h-10 items-center gap-2.5 rounded-lg border bg-card px-3 text-faint transition-colors focus-within:ring-1",
         invalid
@@ -16,9 +29,8 @@ function Field({ icon, children, invalid }: { icon: React.ReactNode; children: R
           : "border-input focus-within:border-ring/60 focus-within:ring-ring/40",
       )}
     >
-      {icon}
       {children}
-    </label>
+    </LabeledInput>
   );
 }
 
@@ -125,7 +137,7 @@ export function AuthForm({
           </div>
         ) : (
           <form onSubmit={sendMagicLink} className="flex w-full flex-col gap-2.5">
-            <Field icon={<EnvelopeSimpleIcon className="size-[15px]" />}>
+            <Field label="Email" icon={<EnvelopeSimpleIcon className="size-[15px]" />}>
               <input
                 type="email"
                 value={email}
@@ -160,7 +172,7 @@ export function AuthForm({
       ) : (
         <form onSubmit={submit} className="flex w-full flex-col gap-2.5">
           {mode === "up" ? (
-            <Field icon={<UserIcon className="size-[15px]" />}>
+            <Field label="Name" icon={<UserIcon className="size-[15px]" />}>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -172,7 +184,7 @@ export function AuthForm({
               />
             </Field>
           ) : null}
-          <Field icon={<EnvelopeSimpleIcon className="size-[15px]" />} invalid={!!error}>
+          <Field label="Email" icon={<EnvelopeSimpleIcon className="size-[15px]" />} invalid={!!error}>
             <input
               type="email"
               value={email}
@@ -184,7 +196,7 @@ export function AuthForm({
               className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-faint disabled:opacity-60"
             />
           </Field>
-          <Field icon={<LockSimpleIcon className="size-[15px]" />} invalid={!!error}>
+          <Field label="Password" icon={<LockSimpleIcon className="size-[15px]" />} invalid={!!error}>
             <input
               type="password"
               value={password}

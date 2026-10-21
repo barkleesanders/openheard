@@ -226,7 +226,7 @@ function StartPage() {
                     setName(e.target.value);
                     if (!slugTouched) debouncedCheck(slugify(e.target.value));
                   }}
-                  autoFocus
+                  aria-label="Company or product name"
                   placeholder="Acme"
                   maxLength={60}
                   className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-faint"

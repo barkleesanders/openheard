@@ -13,7 +13,7 @@ let pendingAction: PendingAction | null = null;
 const listeners = new Set<() => void>();
 
 function emit() {
-  listeners.forEach((fn) => fn());
+  for (const listener of listeners) listener();
 }
 
 export function openSignIn(action: PendingAction) {

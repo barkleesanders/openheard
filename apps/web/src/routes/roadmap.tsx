@@ -117,7 +117,7 @@ function RoadmapPage() {
 function Ticks({ value, color }: { value: number; color: string }) {
   const filled = Math.round(value / 10);
   return (
-    <span className="mt-1 flex gap-[3px]" aria-label={`${value}% along`}>
+    <span role="img" className="mt-1 flex gap-[3px]" aria-label={`${value}% along`}>
       {Array.from({ length: 10 }, (_, i) => (
         <span
           key={i}

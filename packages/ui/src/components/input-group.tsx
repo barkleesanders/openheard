@@ -7,13 +7,12 @@ import { cn } from "@openheard/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 
-function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
+function InputGroup({ className, ...props }: React.ComponentProps<"fieldset">) {
   return (
-    <div
+    <fieldset
       data-slot="input-group"
-      role="group"
       className={cn(
-        "group/input-group relative flex h-8 w-full min-w-0 items-center rounded-sm border border-input bg-background shadow-xs transition-[color,box-shadow] outline-none has-[>textarea]:h-auto dark:bg-input/30",
+        "group/input-group relative m-0 flex h-8 w-full min-w-0 items-center rounded-sm border border-input bg-background p-0 shadow-xs transition-[color,box-shadow] outline-none has-[>textarea]:h-auto dark:bg-input/30",
         "has-[>[data-align=inline-start]]:[&>input]:pl-2 has-[>[data-align=inline-end]]:[&>input]:pr-2",
         "has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:[&>input]:pb-3",
         "has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:[&>input]:pt-3",
@@ -48,14 +47,14 @@ function InputGroupAddon({
   className,
   align = "inline-start",
   ...props
-}: React.ComponentProps<"div"> & VariantProps<typeof inputGroupAddonVariants>) {
+}: React.ComponentProps<"fieldset"> & VariantProps<typeof inputGroupAddonVariants>) {
   return (
-    <div
-      role="group"
+    <fieldset
+      aria-label="Input controls"
       data-slot="input-group-addon"
       data-align={align}
-      className={cn(inputGroupAddonVariants({ align }), className)}
-      onClick={(e) => {
+      className={cn("m-0 min-w-0 border-0", inputGroupAddonVariants({ align }), className)}
+      onPointerDown={(e) => {
         if ((e.target as HTMLElement).closest("button")) {
           return;
         }

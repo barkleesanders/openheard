@@ -387,26 +387,22 @@ export const createWorkspace = createServerFn({ method: "POST" })
     if (!id || id.length < 5 || RESERVED_SLUGS.includes(id)) throw new Error("Pick a different slug");
     const [taken] = await db.select({ id: workspace.id }).from(workspace).where(eq(workspace.id, id)).limit(1);
     if (taken) throw new Error("That slug is taken");
-    await db
-      .insert(workspace)
-      .values({
-        id,
-        name: data.name,
-        website: data.website || null,
-        heardAboutUs: data.heardAboutUs || null,
-        ...(data.whoCanPost ? { whoCanPost: data.whoCanPost } : {}),
-      });
+    await db.insert(workspace).values({
+      id,
+      name: data.name,
+      website: data.website || null,
+      heardAboutUs: data.heardAboutUs || null,
+      ...(data.whoCanPost ? { whoCanPost: data.whoCanPost } : {}),
+    });
     await db.insert(membership).values({ workspaceId: id, userId: u.id, role: "admin" });
     await seedStatuses(db, id);
-    await db
-      .insert(board)
-      .values({
-        id: `${id}-features`,
-        workspaceId: id,
-        name: "Feature requests",
-        description: "Things you wish the product did",
-        position: 0,
-      });
+    await db.insert(board).values({
+      id: `${id}-features`,
+      workspaceId: id,
+      name: "Feature requests",
+      description: "Things you wish the product did",
+      position: 0,
+    });
     return { id };
   });
 

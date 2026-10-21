@@ -138,7 +138,7 @@ function StatusRow({
       >
         <div className="flex items-center gap-2">
           <input
-            autoFocus
+            ref={(input) => input?.focus({ preventScroll: true })}
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="Label"
@@ -181,9 +181,9 @@ function StatusRow({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-          <label className="inline-flex items-center gap-2 text-[13px] text-muted-foreground">
+          <div className="inline-flex items-center gap-2 text-[13px] text-muted-foreground">
             <Toggle on={onRoadmap} onChange={setOnRoadmap} label="Show on roadmap" /> Show on roadmap
-          </label>
+          </div>
           <span className="flex-1" />
           <Button size="sm" variant="ghost" type="button" onClick={() => (onCancel ? onCancel() : setEditing(false))}>
             Cancel

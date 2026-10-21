@@ -45,17 +45,15 @@ export const saveStatus = createServerFn({ method: "POST" })
     const existing = await listStatuses(db, ws);
     let key = slug(data.label) || "status";
     if (existing.some((s) => s.key === key)) key = `${key}-${existing.length + 1}`;
-    await db
-      .insert(status)
-      .values({
-        workspaceId: ws,
-        key,
-        label: data.label,
-        color: data.color,
-        kind: data.kind,
-        onRoadmap: data.onRoadmap,
-        position: existing.length,
-      });
+    await db.insert(status).values({
+      workspaceId: ws,
+      key,
+      label: data.label,
+      color: data.color,
+      kind: data.kind,
+      onRoadmap: data.onRoadmap,
+      position: existing.length,
+    });
     void invalidate(`workspace:${ws}`);
     purgeWorkspaceCache(new URL(getRequest().url).origin);
     return { key };

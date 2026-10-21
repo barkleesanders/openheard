@@ -97,18 +97,16 @@ export const saveChangelog = createServerFn({ method: "POST" })
                 toShip.map((p) => p.id),
               ),
             );
-          await db
-            .insert(activity)
-            .values(
-              toShip.map((p) => ({
-                postId: p.id,
-                actorId: u.id,
-                type: "status" as const,
-                fromStatus: p.status,
-                toStatus: done,
-                note: `shipped in ${data.version || data.title}`,
-              })),
-            );
+          await db.insert(activity).values(
+            toShip.map((p) => ({
+              postId: p.id,
+              actorId: u.id,
+              type: "status" as const,
+              fromStatus: p.status,
+              toStatus: done,
+              note: `shipped in ${data.version || data.title}`,
+            })),
+          );
         }
       }
     }

@@ -257,7 +257,6 @@ function Editor({ entry, onClose }: { entry: Entry | null; onClose: () => void }
               </button>
             </div>
             <input
-              autoFocus={!entry}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => {
@@ -302,7 +301,7 @@ function Editor({ entry, onClose }: { entry: Entry | null; onClose: () => void }
                 {linking ? (
                   <div className="relative">
                     <input
-                      autoFocus
+                      ref={(input) => input?.focus({ preventScroll: true })}
                       value={q}
                       onChange={(e) => setQ(e.target.value)}
                       onBlur={() => setTimeout(() => setLinking(false), 150)}

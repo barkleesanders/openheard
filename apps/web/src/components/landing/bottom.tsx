@@ -82,7 +82,7 @@ export function Products() {
             <Eyebrow className="mb-1">{p.eyebrow}</Eyebrow>
             <h3 className="text-lg font-semibold tracking-tighter text-balance">{p.title}</h3>
             <p className="max-w-[46ch] text-pretty text-muted-foreground">{p.sub}</p>
-            <ul role="list" className="mt-2 flex flex-col gap-2 text-[14px] text-muted-foreground">
+            <ul className="mt-2 flex flex-col gap-2 text-[14px] text-muted-foreground">
               {p.points.map((pt) => (
                 <li key={pt} className="flex items-start gap-2.5">
                   <CheckIcon weight="bold" className="mt-1 size-3.5 shrink-0 text-link" />
@@ -299,11 +299,10 @@ export function Loop() {
             <p>None of it is configured. Turn the board on and the loop runs the same day.</p>
           </div>
         </div>
-        <div className="flex flex-col p-6" role="list">
+        <ol className="flex flex-col p-6">
           {moments.map(([n, t, d], i) => (
-            <div
+            <li
               key={n}
-              role="listitem"
               className={cn("flex gap-5 py-5 first:pt-0 last:pb-0", i < moments.length - 1 && "border-b border-border")}
             >
               <span className="pt-0.5 font-mono text-[13px] text-link">{n}</span>
@@ -311,9 +310,9 @@ export function Loop() {
                 <p className="text-[16px] font-medium">{t}</p>
                 <p className="mt-1 text-[14px] leading-relaxed text-muted-foreground">{d}</p>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
     </Framed>
   );
@@ -377,10 +376,13 @@ export function Own() {
   return (
     <section id="own" className="relative flex w-full scroll-mt-16 flex-col items-center justify-center gap-5">
       <SectionHeader title="Self-host is not a trial. It is the full product, forever." />
-      <div
+      <section
+        aria-label="Self-hosting options"
         className="grid w-full items-center gap-6 px-4 pb-10 md:grid-cols-[400px_1fr] md:gap-10 md:px-6"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
+        onFocus={() => setPaused(true)}
+        onBlur={() => setPaused(false)}
       >
         <div className="flex flex-col">
           {own.map(([t, d], i) => (
@@ -425,7 +427,7 @@ export function Own() {
             → https://feedback.acme.com
           </AnimatedSpan>
         </Terminal>
-      </div>
+      </section>
     </section>
   );
 }
@@ -517,7 +519,7 @@ export function Pricing() {
             <hr className="border-border" />
             <div className="p-4">
               <p className="mb-4 text-sm text-muted-foreground">{p.lead}</p>
-              <ul role="list" className="space-y-3">
+              <ul className="space-y-3">
                 {p.items.map((it) => (
                   <li key={it} className="flex items-center gap-2 text-sm">
                     <span
@@ -695,7 +697,7 @@ export function Footer() {
         <div className="pt-5 md:w-1/2">
           <div className="flex flex-col items-start justify-start gap-y-5 md:flex-row md:items-start md:justify-between lg:pl-10">
             {footerCols.map(([title, links]) => (
-              <ul key={title} role="list" className="flex flex-col gap-y-2">
+              <ul key={title} className="flex flex-col gap-y-2">
                 <li className="mb-2 text-sm font-semibold">{title}</li>
                 {links.map(([label, href]) => (
                   <li key={label}>

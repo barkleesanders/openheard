@@ -71,7 +71,7 @@ function Boards() {
           }}
         >
           <input
-            autoFocus
+            ref={(input) => input?.focus({ preventScroll: true })}
             placeholder="Board name"
             value={newBoard.name}
             onChange={(e) => setNewBoard({ ...newBoard, name: e.target.value })}
@@ -124,7 +124,7 @@ function Boards() {
           }}
         >
           <input
-            autoFocus
+            ref={(input) => input?.focus({ preventScroll: true })}
             placeholder="Tag name"
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
@@ -164,7 +164,12 @@ function BoardRow({
           setEditing(false);
         }}
       >
-        <input autoFocus value={name} onChange={(e) => setName(e.target.value)} className={`${input} w-48`} />
+        <input
+          ref={(input) => input?.focus({ preventScroll: true })}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className={`${input} w-48`}
+        />
         <input
           value={description}
           onChange={(e) => setDescription(e.target.value)}

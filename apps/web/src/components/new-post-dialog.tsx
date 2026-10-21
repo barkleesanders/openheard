@@ -201,6 +201,7 @@ export function NewPostDialog({
               >
                 <span className="inline-flex h-[22px] items-center gap-1 rounded-md border border-input px-1.5 font-mono text-[11px] text-muted-foreground">
                   <svg
+                    aria-hidden="true"
                     width="9"
                     height="9"
                     viewBox="0 0 10 10"

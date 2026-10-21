@@ -318,38 +318,32 @@ export async function seedDemoContent(db: Db, workspaceId: string, adminId: stri
         .values(voters.map((userId) => ({ postId: row.id, userId })))
         .onConflictDoNothing();
     if (p.status !== "open") {
-      await db
-        .insert(schema.activity)
-        .values({
+      await db.insert(schema.activity).values({
+        postId: row.id,
+        actorId: adminId,
+        type: "status",
+        fromStatus: "open",
+        toStatus: p.status === "done" || p.status === "progress" ? "review" : p.status,
+        createdAt: at(Math.max(0, p.days - 1)),
+      });
+      if (p.status === "progress" || p.status === "done")
+        await db.insert(schema.activity).values({
           postId: row.id,
           actorId: adminId,
           type: "status",
-          fromStatus: "open",
-          toStatus: p.status === "done" || p.status === "progress" ? "review" : p.status,
-          createdAt: at(Math.max(0, p.days - 1)),
+          fromStatus: "review",
+          toStatus: p.status,
+          note: p.status === "progress" ? "Started on this. Aiming for the next release." : undefined,
+          createdAt: at(Math.max(0, p.days - 3)),
         });
-      if (p.status === "progress" || p.status === "done")
-        await db
-          .insert(schema.activity)
-          .values({
-            postId: row.id,
-            actorId: adminId,
-            type: "status",
-            fromStatus: "review",
-            toStatus: p.status,
-            note: p.status === "progress" ? "Started on this. Aiming for the next release." : undefined,
-            createdAt: at(Math.max(0, p.days - 3)),
-          });
     }
     if (i % 2 === 0) {
-      await db
-        .insert(schema.comment)
-        .values({
-          postId: row.id,
-          authorId: members[(i + 1) % members.length]!,
-          body: "Same boat here. We would also want the status mapping to be editable.",
-          createdAt: at(Math.max(0, p.days - 1)),
-        });
+      await db.insert(schema.comment).values({
+        postId: row.id,
+        authorId: members[(i + 1) % members.length]!,
+        body: "Same boat here. We would also want the status mapping to be editable.",
+        createdAt: at(Math.max(0, p.days - 1)),
+      });
     }
     i++;
   }

@@ -114,6 +114,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
   if (prefersReduced) {
     return (
       <svg
+        aria-hidden="true"
         fill="none"
         width={svgDimensions.width}
         height={svgDimensions.height}
@@ -128,6 +129,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
 
   return (
     <svg
+      aria-hidden="true"
       fill="none"
       width={svgDimensions.width}
       height={svgDimensions.height}

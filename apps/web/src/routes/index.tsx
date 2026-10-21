@@ -195,7 +195,7 @@ function BoardPage() {
       {posts.length === 0 && !optimisticPost ? (
         <EmptyBoard filtered={filtered} onNew={tryCompose} onClear={() => navigate({ search: {} })} />
       ) : (
-        <ol role="list" className="divide-y divide-white/6">
+        <ol className="divide-y divide-white/6">
           {[...(optimisticPost ? [optimisticPost] : []), ...posts].map((p, i) => {
             const isOptimistic = "_optimistic" in p;
             const st = root.statuses.find((x) => x.key === p.status);

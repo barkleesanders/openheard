@@ -87,7 +87,7 @@ export function Nav() {
                 variant="secondary"
                 size="sm"
                 nativeButton={false}
-                render={ctaHref.startsWith("/") ? <Link to={ctaHref} /> : <a href={ctaHref} />}
+                render={ctaHref.startsWith("/") ? <Link to={ctaHref} /> : <a href={ctaHref}>{cta}</a>}
                 className="hidden sm:inline-flex"
               >
                 {cta}
@@ -158,7 +158,7 @@ export function Nav() {
                   full
                   size="lg"
                   nativeButton={false}
-                  render={ctaHref.startsWith("/") ? <Link to={ctaHref} /> : <a href={ctaHref} />}
+                  render={ctaHref.startsWith("/") ? <Link to={ctaHref} /> : <a href={ctaHref}>{cta}</a>}
                 >
                   {cta}
                 </Button>

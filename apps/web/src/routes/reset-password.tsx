@@ -3,6 +3,7 @@ import { EnvelopeSimpleIcon, LockSimpleIcon } from "@phosphor-icons/react";
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
+import { LabeledInput } from "@/components/labeled-input";
 import Logo from "@/components/logo";
 import { authClient } from "@/lib/auth-client";
 
@@ -82,7 +83,7 @@ function RequestForm() {
         <p className="text-sm text-muted-foreground">Enter your email and we'll send a reset link.</p>
       </div>
       <form onSubmit={submit} className="flex w-full flex-col gap-2.5">
-        <Field icon={<EnvelopeSimpleIcon className="size-[15px]" />}>
+        <Field label="Email" icon={<EnvelopeSimpleIcon className="size-[15px]" />}>
           <input
             type="email"
             value={email}
@@ -147,7 +148,7 @@ function NewPasswordForm({ token }: { token: string }) {
         <p className="text-sm text-muted-foreground">Choose a new password for your account.</p>
       </div>
       <form onSubmit={submit} className="flex w-full flex-col gap-2.5">
-        <Field icon={<LockSimpleIcon className="size-[15px]" />}>
+        <Field label="New password" icon={<LockSimpleIcon className="size-[15px]" />}>
           <input
             type="password"
             value={password}
@@ -169,11 +170,22 @@ function NewPasswordForm({ token }: { token: string }) {
   );
 }
 
-function Field({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+function Field({
+  icon,
+  children,
+  label,
+}: {
+  icon: React.ReactNode;
+  children: React.ReactElement<{ id?: string }>;
+  label: string;
+}) {
   return (
-    <label className="flex h-10 items-center gap-2.5 rounded-lg border border-input bg-card px-3 text-faint transition-colors focus-within:border-ring/60 focus-within:ring-1 focus-within:ring-ring/40">
-      {icon}
+    <LabeledInput
+      label={label}
+      icon={icon}
+      className="flex h-10 items-center gap-2.5 rounded-lg border border-input bg-card px-3 text-faint transition-colors focus-within:border-ring/60 focus-within:ring-1 focus-within:ring-ring/40"
+    >
       {children}
-    </label>
+    </LabeledInput>
   );
 }

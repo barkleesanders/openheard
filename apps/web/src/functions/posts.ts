@@ -229,7 +229,8 @@ export const getPost = createServerFn({ method: "GET" })
           // Grouped: [{ emoji, count, mine }]
           reactions: Object.values(
             c.reactions.reduce<Record<string, { emoji: string; count: number; mine: boolean }>>((acc, r) => {
-              const g = (acc[r.emoji] ??= { emoji: r.emoji, count: 0, mine: false });
+              acc[r.emoji] ??= { emoji: r.emoji, count: 0, mine: false };
+              const g = acc[r.emoji];
               g.count++;
               if (context.user && r.userId === context.user.id) g.mine = true;
               return acc;
@@ -437,16 +438,14 @@ export const setStatus = createServerFn({ method: "POST" })
     const [current] = await db.select({ status: post.status }).from(post).where(eq(post.id, data.postId));
     if (!current || current.status === data.status) return { ok: true };
     await db.update(post).set({ status: data.status, statusChangedAt: new Date() }).where(eq(post.id, data.postId));
-    await db
-      .insert(activity)
-      .values({
-        postId: data.postId,
-        actorId: u.id,
-        type: "status",
-        fromStatus: current.status,
-        toStatus: data.status,
-        note: data.note || null,
-      });
+    await db.insert(activity).values({
+      postId: data.postId,
+      actorId: u.id,
+      type: "status",
+      fromStatus: current.status,
+      toStatus: data.status,
+      note: data.note || null,
+    });
     void invalidate(`workspace:${context.workspace.id}`);
     purgeWorkspaceCache(originFromRequest(), [data.postId]);
     return { ok: true };
