@@ -10,6 +10,7 @@
     "packages/auth/src/email-delivery.ts",
     "apps/web/src/lib/email.ts",
     "apps/web/src/lib/subscriptions.ts",
+    "apps/web/src/lib/notification-dispatch.ts",
     "apps/web/src/routes/api/email-test.ts"
   ],
   "tests": [
@@ -17,6 +18,7 @@
     "packages/auth/src/email-delivery.test.ts",
     "apps/web/src/lib/email.test.ts",
     "apps/web/src/lib/subscriptions.test.ts",
+    "apps/web/src/lib/notification-dispatch.test.ts",
     "apps/web/src/lib/email-test-route.test.ts"
   ],
   "command": ["bun", "run", "test:email-design"]

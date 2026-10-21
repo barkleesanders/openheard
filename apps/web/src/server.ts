@@ -38,17 +38,17 @@ export default {
     }
     return response;
   },
-  // Nightly: the public demo workspace goes back to its seed. Bindings come
-  // from `cloudflare:workers`, which is live in a scheduled invocation too.
-  async scheduled(_controller: ScheduledController, _env: unknown, ctx: ExecutionContext) {
+  // Keep nightly demo reset independent from the minute notification tick.
+  async scheduled(controller: ScheduledController, _env: unknown, ctx: ExecutionContext) {
     ctx.waitUntil(
       (async () => {
-        const [{ createDb }, { resetDemoWorkspace }] = await Promise.all([
-          import("@openheard/db"),
-          import("./lib/demo-db"),
-        ]);
-        const { posts } = await resetDemoWorkspace(createDb());
-        console.log(`demo reset: ${posts} posts`);
+        const { runScheduledWork } = await import("./lib/scheduled-work");
+        try {
+          console.log(JSON.stringify(await runScheduledWork(controller.cron)));
+        } catch {
+          console.error(JSON.stringify({ event: "scheduled.failed" }));
+          throw new Error("Scheduled maintenance failed");
+        }
       })(),
     );
   },

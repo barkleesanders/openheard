@@ -19,17 +19,16 @@ function Notifications() {
   const [form, setForm] = useState(saved);
   const dirty = JSON.stringify(form) !== JSON.stringify(saved);
 
-  function save() {
-    saveNotificationPrefs({ data: form })
-      .then(() => router.invalidate())
-      .catch((err) => toast.error(err instanceof Error ? err.message : "Could not save"));
+  async function save() {
+    await saveNotificationPrefs({ data: form });
+    await router.invalidate();
   }
 
   return (
     <>
       <PageHead
         title="Notifications"
-        sub="What lands in your inbox for this workspace. Sending starts once an email provider is connected."
+        sub="Workspace alerts for your verified email address. Public request and release subscriptions are managed separately from links in those emails."
       />
       <SectionHead title="Email me when" />
       <Row label="Someone posts" help="A new post lands in Pending.">
@@ -38,7 +37,7 @@ function Notifications() {
       <Row label="Someone comments" help="A public comment on any post.">
         <Toggle on={form.notifyComment} onChange={(v) => setForm({ ...form, notifyComment: v })} label="New comment" />
       </Row>
-      <Row label="A status changes" help="Another admin moves a post.">
+      <Row label="A status changes" help="A request changes status.">
         <Toggle on={form.notifyStatus} onChange={(v) => setForm({ ...form, notifyStatus: v })} label="Status change" />
       </Row>
       <div className="flex items-center justify-end gap-3 border-t pt-4">

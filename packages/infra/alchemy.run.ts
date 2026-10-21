@@ -59,8 +59,8 @@ export const web = Cloudflare.Website.Vite("web", {
   compatibility: {
     flags: ["nodejs_compat"],
   },
-  // Wipes the public demo workspace back to its seed, 04:00 UTC.
-  crons: ["0 4 * * *"],
+  // Minute ticks drain durable notifications; the demo reset stays at 04:00 UTC.
+  crons: ["0 4 * * *", "* * * * *"],
   env: {
     DB: db,
     CACHE: cache,

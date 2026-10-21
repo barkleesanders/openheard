@@ -46,6 +46,7 @@ export interface EditorialEmail {
   paragraphs: string[];
   cta?: { label: string; url: string };
   footer?: string;
+  footerLinks?: { label: string; url: string }[];
 }
 
 function paragraph(text: string, color: string, size = 15): string {
@@ -75,6 +76,13 @@ export function editorialEmailHtml(m: EditorialEmail): string {
           ${m.paragraphs.map((p) => paragraph(p, t.ink)).join("\n          ")}
           ${cta}
           ${m.footer ? paragraph(m.footer, t.muted, 13) : ""}
+          ${(m.footerLinks ?? [])
+            .map((link) =>
+              isSafeHref(link.url)
+                ? `<p style="${FONT} font-size:13px; line-height:1.7;"><a href="${escapeHtml(link.url)}" style="color:${t.muted};">${escapeHtml(link.label)}</a></p>`
+                : paragraph(link.label, t.muted, 13),
+            )
+            .join("\n")}
         </td></tr>
         <tr><td align="center" style="${FONT} font-size:11px; line-height:1.6; color:${t.muted}; padding:22px 4px 0;">${escapeHtml(m.brand)} &middot; open source feedback board</td></tr>
       </table>
@@ -88,6 +96,7 @@ export function editorialEmailText(m: EditorialEmail): string {
   const lines = [m.heading, "", ...m.paragraphs];
   if (m.cta) lines.push("", `${m.cta.label}: ${m.cta.url}`);
   if (m.footer) lines.push("", m.footer);
+  for (const link of m.footerLinks ?? []) lines.push("", `${link.label}: ${link.url}`);
   return lines.join("\n");
 }
 

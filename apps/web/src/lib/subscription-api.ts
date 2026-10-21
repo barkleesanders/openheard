@@ -6,9 +6,9 @@ import { workspaceFromRequest } from "./session";
 import {
   confirmEmailSubscription,
   requestEmailSubscription,
-  subscriptionOrigin,
   subscriptionTokenHash,
   unsubscribeEmailSubscription,
+  workspaceNotificationOrigin,
 } from "./subscriptions";
 
 const Action = z.discriminatedUnion("action", [
@@ -120,13 +120,7 @@ export async function handleSubscriptionRequest(request: Request): Promise<Respo
         ok: true,
         ...(await unsubscribeEmailSubscription(db, ws.id, input.id, input.token, env.BETTER_AUTH_SECRET)),
       });
-    let origin = subscriptionOrigin(env.BETTER_AUTH_URL || "");
-    const root = env.ROOT_DOMAIN?.trim().toLowerCase();
-    if (root && root !== "localhost" && ws.id !== "default") {
-      if (!/^[a-z0-9][a-z0-9-]{0,31}$/.test(ws.id) || !/^[a-z0-9.-]+$/.test(root))
-        throw new EmailDeliveryError("unavailable");
-      origin = subscriptionOrigin(`https://${ws.id}.${root}`);
-    }
+    const origin = workspaceNotificationOrigin(ws.id, env.BETTER_AUTH_URL || "", env.ROOT_DOMAIN);
     const from = emailSender(env);
     return json({
       ok: true,

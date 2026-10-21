@@ -33,6 +33,15 @@ export function subscriptionOrigin(value: string) {
   return url.origin;
 }
 
+export function workspaceNotificationOrigin(workspaceId: string, configuredOrigin: string, rootDomain?: string) {
+  const origin = subscriptionOrigin(configuredOrigin);
+  const root = rootDomain?.trim().toLowerCase();
+  if (!root || root === "localhost" || workspaceId === "default") return origin;
+  if (!/^[a-z0-9][a-z0-9-]{0,31}$/.test(workspaceId) || !/^[a-z0-9.-]+$/.test(root))
+    throw new EmailDeliveryError("unavailable");
+  return subscriptionOrigin(`https://${workspaceId}.${root}`);
+}
+
 async function publicScope(db: Db, workspaceId: string, postId?: number | null) {
   const [ws] = await db.select().from(workspace).where(eq(workspace.id, workspaceId)).limit(1);
   if (!ws || ws.id === DEMO_WORKSPACE_ID) throw new Error("Email updates are unavailable here");
