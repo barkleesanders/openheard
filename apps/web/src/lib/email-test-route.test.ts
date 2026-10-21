@@ -13,13 +13,17 @@ vi.mock("@openheard/env/server", () => ({
   },
 }));
 
-import { emailTestHandlers, Route } from "../routes/api/email-test";
+import { Route } from "../routes/api/email-test";
 
-type Handler = (ctx: { request: Request }) => Promise<Response>;
-const handlers: Record<string, Handler> = emailTestHandlers;
-function call(method: string, origin?: string, body?: string) {
-  const handler = handlers[method];
-  if (!handler) throw new Error(`${method} handler missing`);
+const handlers = Route.options.server?.handlers;
+if (!handlers || typeof handlers !== "object") throw new Error("Email diagnostic route handlers missing");
+function call(method: "GET" | "POST", origin?: string, body?: string) {
+  const registered = Route.options.server?.handlers;
+  if (!registered || typeof registered !== "object") throw new Error("Route handlers missing");
+  const value: unknown = Reflect.get(registered, method);
+  if (typeof value !== "function") throw new Error(`${method} handler missing`);
+  // Test adapter for the framework's registered request-handler contract.
+  const handler = value as (ctx: { request: Request }) => Promise<Response>;
   return handler({
     request: new Request("https://feedback.example.test/api/email-test?to=unrequested@example.test", {
       method,
@@ -36,7 +40,7 @@ beforeEach(() => {
 
 describe("admin email diagnostics", () => {
   it("registers these exact handlers on the application route", () => {
-    expect(Route.options.server?.handlers).toBe(emailTestHandlers);
+    expect(Object.keys(handlers)).toEqual(["GET", "POST"]);
   });
   it("never sends from a GET, even when an old recipient query parameter is present", async () => {
     const response = await call("GET");

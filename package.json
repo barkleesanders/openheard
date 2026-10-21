@@ -55,7 +55,7 @@
     "check-types": "bun run --filter '*' check-types",
     "dev:web": "bun run --filter web dev:bare",
     "db:generate": "bun run --filter @openheard/db db:generate",
-    "deploy": "bun run --filter @openheard/infra deploy",
+    "deploy": "bun run deploy:instance",
     "destroy": "bun run --filter @openheard/infra destroy",
     "dev:local": "OPENHEARD_LOCAL=1 bun run --filter web dev:bare",
     "db:push:local": "bun run --filter @openheard/db db:push:local",
@@ -63,7 +63,8 @@
     "demo:reset": "OPENHEARD_LOCAL=1 bun run --filter web demo:reset",
     "gate:auth-security": "vitest run --config packages/auth/vitest.config.ts",
     "gate:dependency-security": "node scripts/dependency-security.test.mjs",
-    "deploy:instance": "bun run gate:dependency-security && bun run gate:auth-security && bun run test:email-design && cd packages/infra && bunx alchemy deploy --stage prod --yes",
+    "gate:public-assets": "node --test scripts/public-assets.test.mjs && node scripts/public-assets.mjs",
+    "deploy:instance": "bun run gate:dependency-security && bun run gate:auth-security && bun run test:email-design && node --test scripts/public-assets.test.mjs && node scripts/public-assets.mjs --live-config --check-origin && cd packages/infra && bunx alchemy deploy --stage prod --yes && node ../../scripts/public-assets.mjs --live-config",
     "test:email-design": "vitest run --config packages/auth/vitest.config.ts src/email-design.test.ts && cd apps/web && vitest run src/lib/email.test.ts src/lib/email-test-route.test.ts"
   },
   "dependencies": {

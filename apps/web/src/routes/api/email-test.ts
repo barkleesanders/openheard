@@ -37,58 +37,60 @@ async function mailEnvironment() {
   return env as unknown as { EMAIL?: Mailer; AUTH_EMAIL_FROM?: string; AUTH_EMAIL_FROM_NAME?: string };
 }
 
-export const emailTestHandlers = {
-  // A link, crawler or prefetched URL must never send a message.
-  GET: async ({ request }: { request: Request }) => {
-    const { user } = await getSessionContext(request);
-    if (user?.role !== "admin") return json({ error: "admin session required" }, 403);
-    const env = await mailEnvironment();
-    return json({ configured: !!env.EMAIL, send_method: "POST" });
+export const Route = createFileRoute("/api/email-test")({
+  server: {
+    handlers: {
+      // A link, crawler or prefetched URL must never send a message.
+      GET: async ({ request }: { request: Request }) => {
+        const { user } = await getSessionContext(request);
+        if (user?.role !== "admin") return json({ error: "admin session required" }, 403);
+        const env = await mailEnvironment();
+        return json({ configured: !!env.EMAIL, send_method: "POST" });
+      },
+      POST: async ({ request }: { request: Request }) => {
+        const { user } = await getSessionContext(request);
+        if (user?.role !== "admin") return json({ error: "admin session required" }, 403);
+        if (request.headers.get("Origin") !== new URL(request.url).origin) {
+          return json({ error: "same-origin request required" }, 403);
+        }
+        if (request.headers.get("Content-Type")?.split(";")[0]?.trim() !== "application/json") {
+          return json({ error: "JSON body required" }, 415);
+        }
+        let to: string;
+        try {
+          to = Recipient.parse(JSON.parse(await readBody(request))).to;
+        } catch (error) {
+          return json(
+            { error: error instanceof RangeError ? "request too large" : "invalid recipient" },
+            error instanceof RangeError ? 413 : 400,
+          );
+        }
+        const env = await mailEnvironment();
+        if (!env.EMAIL) return json({ error: "email binding unavailable" }, 503);
+        const brand = env.AUTH_EMAIL_FROM_NAME || "openheard";
+        const message = {
+          brand,
+          heading: "Email delivery test",
+          paragraphs: ["This message verifies the feedback board's email sending configuration."],
+        };
+        try {
+          await env.EMAIL.send({
+            to,
+            from: { email: env.AUTH_EMAIL_FROM || "hello@openheard.com", name: brand },
+            subject: "Feedback board email test",
+            text: editorialEmailText(message),
+            html: editorialEmailHtml(message),
+          });
+          console.log(JSON.stringify({ event: "email_test.accepted" }));
+          return json({ ok: true });
+        } catch (error) {
+          const reason = (error instanceof Error ? error.message : String(error))
+            .replace(/[^\s@]+@[^\s@]+/g, "[email]")
+            .slice(0, 300);
+          console.error(JSON.stringify({ event: "email_test.failed", reason }));
+          return json({ error: "send failed" }, 502);
+        }
+      },
+    },
   },
-  POST: async ({ request }: { request: Request }) => {
-    const { user } = await getSessionContext(request);
-    if (user?.role !== "admin") return json({ error: "admin session required" }, 403);
-    if (request.headers.get("Origin") !== new URL(request.url).origin) {
-      return json({ error: "same-origin request required" }, 403);
-    }
-    if (request.headers.get("Content-Type")?.split(";")[0]?.trim() !== "application/json") {
-      return json({ error: "JSON body required" }, 415);
-    }
-    let to: string;
-    try {
-      to = Recipient.parse(JSON.parse(await readBody(request))).to;
-    } catch (error) {
-      return json(
-        { error: error instanceof RangeError ? "request too large" : "invalid recipient" },
-        error instanceof RangeError ? 413 : 400,
-      );
-    }
-    const env = await mailEnvironment();
-    if (!env.EMAIL) return json({ error: "email binding unavailable" }, 503);
-    const brand = env.AUTH_EMAIL_FROM_NAME || "openheard";
-    const message = {
-      brand,
-      heading: "Email delivery test",
-      paragraphs: ["This message verifies the feedback board's email sending configuration."],
-    };
-    try {
-      await env.EMAIL.send({
-        to,
-        from: { email: env.AUTH_EMAIL_FROM || "hello@openheard.com", name: brand },
-        subject: "Feedback board email test",
-        text: editorialEmailText(message),
-        html: editorialEmailHtml(message),
-      });
-      console.log(JSON.stringify({ event: "email_test.accepted" }));
-      return json({ ok: true });
-    } catch (error) {
-      const reason = (error instanceof Error ? error.message : String(error))
-        .replace(/[^\s@]+@[^\s@]+/g, "[email]")
-        .slice(0, 300);
-      console.error(JSON.stringify({ event: "email_test.failed", reason }));
-      return json({ error: "send failed" }, 502);
-    }
-  },
-};
-
-export const Route = createFileRoute("/api/email-test")({ server: { handlers: emailTestHandlers } });
+});

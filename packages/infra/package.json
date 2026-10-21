@@ -5,7 +5,7 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "dev": "alchemy dev",
-    "deploy": "alchemy deploy",
+    "deploy": "cd ../.. && bun run deploy:instance",
     "destroy": "alchemy destroy"
   },
   "dependencies": {

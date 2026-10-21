@@ -2,7 +2,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 import { defineConfig } from "vite";
+import { clientServerLeaks } from "../../scripts/release-boundaries.mjs";
 
 const local = process.env.OPENHEARD_LOCAL === "1";
 
@@ -49,5 +51,23 @@ export default defineConfig({
       },
     },
   },
-  plugins: [tailwindcss(), tanstackStart(), viteReact({ compiler: true })],
+  plugins: [
+    tailwindcss(),
+    tanstackStart(),
+    viteReact({ compiler: true }),
+    {
+      name: "openheard-release-boundaries",
+      generateBundle(_options, bundle) {
+        if (this.environment.name !== "client") return;
+        const leaked = clientServerLeaks(bundle);
+        if (leaked.length) this.error(`Server-only modules reached the browser: ${leaked.join(", ")}`);
+      },
+      closeBundle() {
+        if (this.environment.name !== "client") return;
+        execFileSync(process.execPath, [fileURLToPath(new URL("../../scripts/public-assets.mjs", import.meta.url))], {
+          stdio: "inherit",
+        });
+      },
+    },
+  ],
 });

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node ../../scripts/dependency-security.test.mjs && vite build",
+    "build": "node ../../scripts/dependency-security.test.mjs && node --test ../../scripts/public-assets.test.mjs ../../scripts/release-boundaries.test.mjs && vite build",
     "serve": "vite preview",
     "dev:bare": "vite dev",
     "seed": "bun run src/scripts/seed.ts",

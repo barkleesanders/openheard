@@ -1,7 +1,7 @@
 import type { workspace } from "@openheard/db";
 import type { Role } from "@openheard/db/schema/feedback";
 import { notFound } from "@tanstack/react-router";
-import { createMiddleware } from "@tanstack/react-start";
+import { createMiddleware, createServerOnlyFn } from "@tanstack/react-start";
 import { and, eq } from "drizzle-orm";
 
 import { DEMO_ADMIN_ID, DEMO_WORKSPACE_ID } from "./demo";
@@ -13,12 +13,12 @@ export type Workspace = typeof workspace.$inferSelect;
 // Cloud: acme.openheard.com -> "acme" (ROOT_DOMAIN=openheard.com). Local dev
 // works the same way with acme.localhost:3001. Anything else, including a
 // self-hosted custom domain, is the "default" workspace.
-export async function rootDomain(): Promise<string | null> {
+export const rootDomain = createServerOnlyFn(async (): Promise<string | null> => {
   // Dynamic import keeps the server env (and dotenv) out of the client bundle,
   // since middleware objects are shipped to the browser.
   const { env } = await import("@openheard/env/server");
   return (env as unknown as { ROOT_DOMAIN?: string }).ROOT_DOMAIN ?? null;
-}
+});
 
 export function workspaceSlugFromHost(host: string, rootDomainValue: string | null): string {
   const root = (rootDomainValue ?? "localhost").toLowerCase();
@@ -34,14 +34,14 @@ export function workspaceSlugFromHost(host: string, rootDomainValue: string | nu
 // second workspace. With OPENHEARD_LOCAL=1, `?ws=<slug>` picks one and is
 // remembered in a cookie so server functions on the same origin agree. The
 // cloud never reads either: hosts are the only source of truth there.
-async function localDev(): Promise<boolean> {
+const localDev = createServerOnlyFn(async (): Promise<boolean> => {
   const { env } = await import("@openheard/env/server");
   return (env as unknown as { OPENHEARD_LOCAL?: string }).OPENHEARD_LOCAL === "1";
-}
+});
 
 const SLUG = /^[a-z0-9][a-z0-9-]{0,31}$/;
 
-async function localWorkspaceOverride(request: Request): Promise<string | null> {
+const localWorkspaceOverride = createServerOnlyFn(async (request: Request): Promise<string | null> => {
   const fromQuery = new URL(request.url).searchParams.get("ws");
   if (fromQuery && SLUG.test(fromQuery)) {
     // Remember it, so the next server-function POST (no query string) agrees.
@@ -55,7 +55,7 @@ async function localWorkspaceOverride(request: Request): Promise<string | null> 
   }
   const fromCookie = /(?:^|;\s*)ws=([^;]+)/.exec(request.headers.get("cookie") ?? "")?.[1];
   return fromCookie && SLUG.test(fromCookie) ? fromCookie : null;
-}
+});
 
 // The workspace slug a request is for, local override included.
 export async function workspaceSlugFromRequest(request: Request): Promise<string> {
@@ -77,19 +77,19 @@ export function isMarketingHost(host: string, rootDomainValue: string | null): b
 }
 
 // Workspace for a raw request (sitemap, RSS, API routes that have no session middleware).
-export async function workspaceFromRequest(request: Request): Promise<Workspace | null> {
+export const workspaceFromRequest = createServerOnlyFn(async (request: Request): Promise<Workspace | null> => {
   const slug = await workspaceSlugFromRequest(request);
   const { createDb, workspace } = await import("@openheard/db");
   const [ws] = await createDb().select().from(workspace).where(eq(workspace.id, slug)).limit(1);
   return ws ?? null;
-}
+});
 
 const ctxCache = new WeakMap<
   Request,
   Promise<{ user: SessionUser | null; workspace: Workspace; marketing: boolean }>
 >();
 
-async function resolveSession(request: Request) {
+const resolveSession = createServerOnlyFn(async (request: Request) => {
   const [{ createDb, membership, workspace }, { createAuth }] = await Promise.all([
     import("@openheard/db"),
     import("@openheard/auth"),
@@ -136,7 +136,7 @@ async function resolveSession(request: Request) {
     };
   }
   return { user, workspace: ws, marketing };
-}
+});
 
 // Same resolution as sessionMiddleware, for raw route handlers.
 export function getSessionContext(request: Request) {
