@@ -3,16 +3,15 @@ import { realpathSync } from "node:fs";
 import { createRequire } from "node:module";
 import { test } from "node:test";
 
-const require = createRequire(import.meta.url);
-const alchemy = createRequire(
-  `${realpathSync(new URL("../packages/infra/node_modules/alchemy", import.meta.url))}/package.json`,
-);
-const glob = alchemy.resolve("fast-glob");
-const micromatch = createRequire(glob).resolve("micromatch");
 const consumers = [
-  ["workspace", require("braces")],
-  ["Alchemy fast-glob", createRequire(micromatch)("braces")],
-];
+  ["Alchemy", "../packages/infra/node_modules/alchemy"],
+  ["shadcn", "../packages/ui/node_modules/shadcn"],
+].map(([name, packagePath]) => {
+  const consumer = createRequire(`${realpathSync(new URL(packagePath, import.meta.url))}/package.json`);
+  const glob = consumer.resolve("fast-glob");
+  const micromatch = createRequire(glob).resolve("micromatch");
+  return [name, createRequire(micromatch)("braces")];
+});
 
 // GHSA-vfj7-8cjw-p6xm has no published fix. Exercise the installed Bun patch
 // through the real consumers, so an unapplied patch fails the release build.
