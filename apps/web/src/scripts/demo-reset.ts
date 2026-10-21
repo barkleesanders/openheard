@@ -1,9 +1,9 @@
 // Wipe the local demo workspace back to its seed. Same code the nightly cron
 // runs in the Worker. Usage: bun run demo:reset
 import { createClient } from "@libsql/client";
-import { config } from "dotenv";
 import type { Db } from "@openheard/db";
 import * as schema from "@openheard/db/schema/index";
+import { config } from "dotenv";
 import { drizzle } from "drizzle-orm/libsql";
 
 import { resetDemoWorkspace } from "../lib/demo-db";

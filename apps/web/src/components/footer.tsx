@@ -21,7 +21,10 @@ export default function Footer() {
       {!data || data.workspace.poweredBy ? (
         <span className="md:pl-4">
           powered by{" "}
-          <a href="https://github.com/Heilonng23/openheard" className="font-semibold text-muted-foreground hover:text-foreground">
+          <a
+            href="https://github.com/Heilonng23/openheard"
+            className="font-semibold text-muted-foreground hover:text-foreground"
+          >
             openheard
           </a>
         </span>

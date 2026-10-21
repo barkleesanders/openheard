@@ -1,15 +1,7 @@
-import {
-  activity,
-  board,
-  changelogEntry,
-  changelogPost,
-  comment,
-  post,
-  status,
-} from "@openheard/db";
 import type { Db } from "@openheard/db";
+import { activity, board, changelogEntry, changelogPost, comment, post, status } from "@openheard/db";
 import { user } from "@openheard/db/schema/auth";
-import { and, desc, eq, inArray, isNotNull, like, or, sql, asc } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, like, or, sql } from "drizzle-orm";
 import { ApiError } from "./api-auth";
 
 // Re-usable query logic for the HTTP API and MCP server.
@@ -19,7 +11,14 @@ import { ApiError } from "./api-auth";
 export async function queryListPosts(
   db: Db,
   workspaceId: string,
-  opts: { board?: string; status?: string; q?: string; sort?: "top" | "new" | "trending"; limit?: number; offset?: number },
+  opts: {
+    board?: string;
+    status?: string;
+    q?: string;
+    sort?: "top" | "new" | "trending";
+    limit?: number;
+    offset?: number;
+  },
 ) {
   const limit = Math.min(Math.max(opts.limit ?? 30, 1), 100);
   const offset = Math.max(opts.offset ?? 0, 0);
@@ -142,7 +141,11 @@ export async function mutateCreatePost(
 
   let authorId: string | null = null;
   if (data.authorEmail) {
-    const [u] = await db.select({ id: user.id }).from(user).where(eq(user.email, data.authorEmail.toLowerCase())).limit(1);
+    const [u] = await db
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.email, data.authorEmail.toLowerCase()))
+      .limit(1);
     if (u) authorId = u.id;
   }
 
@@ -161,12 +164,7 @@ export async function mutateCreatePost(
   return { id: created.id };
 }
 
-export async function mutateSetStatus(
-  db: Db,
-  workspaceId: string,
-  postId: number,
-  statusKey: string,
-) {
+export async function mutateSetStatus(db: Db, workspaceId: string, postId: number, statusKey: string) {
   const [p] = await db
     .select({ id: post.id, status: post.status })
     .from(post)
@@ -193,16 +191,13 @@ export async function mutateSetStatus(
   if (p.status === statusKey) return { ok: true, status: statusKey };
 
   await db.update(post).set({ status: statusKey, statusChangedAt: new Date() }).where(eq(post.id, postId));
-  await db.insert(activity).values({ postId, actorId: null, type: "status", fromStatus: p.status, toStatus: statusKey });
+  await db
+    .insert(activity)
+    .values({ postId, actorId: null, type: "status", fromStatus: p.status, toStatus: statusKey });
   return { ok: true, status: statusKey };
 }
 
-export async function mutateAddComment(
-  db: Db,
-  workspaceId: string,
-  postId: number,
-  body: string,
-) {
+export async function mutateAddComment(db: Db, workspaceId: string, postId: number, body: string) {
   if (!body || body.trim().length < 1) throw new ApiError(422, "Comment body is required");
   if (body.length > 5000) throw new ApiError(422, "Comment too long (max 5000 characters)");
 
@@ -217,7 +212,10 @@ export async function mutateAddComment(
     .insert(comment)
     .values({ postId, authorId: null, body: body.trim(), internal: false })
     .returning({ id: comment.id });
-  await db.update(post).set({ commentCount: sql`${post.commentCount} + 1` }).where(eq(post.id, postId));
+  await db
+    .update(post)
+    .set({ commentCount: sql`${post.commentCount} + 1` })
+    .where(eq(post.id, postId));
   return { id: c.id };
 }
 
@@ -307,10 +305,7 @@ export async function mutatePublishChangelog(db: Db, workspaceId: string, entryI
   if (!entry) throw new ApiError(404, "Changelog entry not found");
   if (entry.publishedAt) throw new ApiError(422, "Already published");
 
-  await db
-    .update(changelogEntry)
-    .set({ publishedAt: new Date() })
-    .where(eq(changelogEntry.id, entryId));
+  await db.update(changelogEntry).set({ publishedAt: new Date() }).where(eq(changelogEntry.id, entryId));
 
   const linked = await db
     .select({ postId: changelogPost.postId })
@@ -335,7 +330,12 @@ export async function mutatePublishChangelog(db: Db, workspaceId: string, entryI
         await db
           .update(post)
           .set({ status: doneStatus.key, statusChangedAt: new Date() })
-          .where(inArray(post.id, toShip.map((p) => p.id)));
+          .where(
+            inArray(
+              post.id,
+              toShip.map((p) => p.id),
+            ),
+          );
         await db.insert(activity).values(
           toShip.map((p) => ({
             postId: p.id,

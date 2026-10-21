@@ -1,18 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { authenticateApiKey, apiJson, apiErrorResponse, ApiError } from "@/lib/api-auth";
-import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import {
-  queryListPosts,
-  queryGetPost,
-  mutateCreatePost,
-  mutateSetStatus,
   mutateAddComment,
-  queryStatuses,
-  queryBoards,
-  queryChangelog,
+  mutateCreatePost,
   mutateDraftChangelog,
   mutatePublishChangelog,
+  mutateSetStatus,
+  queryBoards,
+  queryChangelog,
+  queryGetPost,
+  queryListPosts,
+  queryStatuses,
 } from "@/lib/api-actions";
+import { ApiError, apiErrorResponse, apiJson, authenticateApiKey } from "@/lib/api-auth";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 type RouteHandler = (request: Request, params: Record<string, string>) => Promise<Response>;
 
@@ -121,7 +121,10 @@ const postRoutes: RouteHandler = async (request, params) => {
 
 async function handleRequest(request: Request, params: Record<string, string>): Promise<Response> {
   try {
-    const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const ip =
+      request.headers.get("cf-connecting-ip") ??
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      "unknown";
     const auth = request.headers.get("authorization");
     const key = auth?.startsWith("Bearer ") ? auth.slice(7, 20) : ip;
     const rl = await rateLimit(`api:${key}`, { window: 60, max: 60 });

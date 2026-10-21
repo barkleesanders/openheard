@@ -1,20 +1,25 @@
 import { Button } from "@openheard/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@openheard/ui/components/dropdown-menu";
 import { DotsThreeIcon, PlusIcon } from "@phosphor-icons/react";
 import { createFileRoute, useLoaderData, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-
 import { SectionHead } from "@/components/admin/panel";
 import { deleteBoard, deleteTag, saveBoard, saveTag } from "@/functions/settings";
 import { PageHead } from "@/routes/dashboard/settings";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@openheard/ui/components/dropdown-menu";
 
 export const Route = createFileRoute("/dashboard/settings/boards")({
   head: () => ({ meta: [{ title: "Boards & tags · settings" }] }),
   component: Boards,
 });
 
-const input = "h-8 rounded-lg border border-input bg-card px-2.5 text-[13px] outline-none placeholder:text-faint focus:border-ring/60";
+const input =
+  "h-8 rounded-lg border border-input bg-card px-2.5 text-[13px] outline-none placeholder:text-faint focus:border-ring/60";
 
 function Boards() {
   const root = useLoaderData({ from: "__root__" });
@@ -45,7 +50,16 @@ function Boards() {
         }
       />
       {root.boards.map((b) => (
-        <BoardRow key={b.id} board={b} onSave={(name, description) => fire(() => saveBoard({ data: { id: b.id, name, description } }), "Board updated")} onDelete={() => confirm(`Delete "${b.name}"?`) && fire(() => deleteBoard({ data: { id: b.id } }), "Board deleted")} />
+        <BoardRow
+          key={b.id}
+          board={b}
+          onSave={(name, description) =>
+            fire(() => saveBoard({ data: { id: b.id, name, description } }), "Board updated")
+          }
+          onDelete={() =>
+            confirm(`Delete "${b.name}"?`) && fire(() => deleteBoard({ data: { id: b.id } }), "Board deleted")
+          }
+        />
       ))}
       {newBoard ? (
         <form
@@ -56,8 +70,19 @@ function Boards() {
             setNewBoard(null);
           }}
         >
-          <input autoFocus placeholder="Board name" value={newBoard.name} onChange={(e) => setNewBoard({ ...newBoard, name: e.target.value })} className={`${input} w-48`} />
-          <input placeholder="One-line description" value={newBoard.description} onChange={(e) => setNewBoard({ ...newBoard, description: e.target.value })} className={`${input} flex-1`} />
+          <input
+            autoFocus
+            placeholder="Board name"
+            value={newBoard.name}
+            onChange={(e) => setNewBoard({ ...newBoard, name: e.target.value })}
+            className={`${input} w-48`}
+          />
+          <input
+            placeholder="One-line description"
+            value={newBoard.description}
+            onChange={(e) => setNewBoard({ ...newBoard, description: e.target.value })}
+            className={`${input} flex-1`}
+          />
           <Button size="sm" type="submit" disabled={!newBoard.name.trim()}>
             Add
           </Button>
@@ -77,10 +102,14 @@ function Boards() {
           }
         />
       </div>
-      {root.tags.length === 0 && newTag === null ? <p className="border-t py-4 text-sm text-faint">No tags yet.</p> : null}
+      {root.tags.length === 0 && newTag === null ? (
+        <p className="border-t py-4 text-sm text-faint">No tags yet.</p>
+      ) : null}
       {root.tags.map((t) => (
         <div key={t.id} className="flex items-center gap-3 border-t py-2.5">
-          <span className="inline-flex h-[22px] items-center rounded-md border border-input bg-secondary px-2 text-xs">{t.name}</span>
+          <span className="inline-flex h-[22px] items-center rounded-md border border-input bg-secondary px-2 text-xs">
+            {t.name}
+          </span>
           <span className="flex-1" />
           <More onDelete={() => fire(() => deleteTag({ data: { id: t.id } }), "Tag deleted")} />
         </div>
@@ -94,7 +123,13 @@ function Boards() {
             setNewTag(null);
           }}
         >
-          <input autoFocus placeholder="Tag name" value={newTag} onChange={(e) => setNewTag(e.target.value)} className={`${input} w-48`} />
+          <input
+            autoFocus
+            placeholder="Tag name"
+            value={newTag}
+            onChange={(e) => setNewTag(e.target.value)}
+            className={`${input} w-48`}
+          />
           <Button size="sm" type="submit" disabled={!newTag.trim()}>
             Add
           </Button>
@@ -107,7 +142,15 @@ function Boards() {
   );
 }
 
-function BoardRow({ board, onSave, onDelete }: { board: { id: string; name: string; description: string | null; count: number }; onSave: (name: string, description: string) => void; onDelete: () => void }) {
+function BoardRow({
+  board,
+  onSave,
+  onDelete,
+}: {
+  board: { id: string; name: string; description: string | null; count: number };
+  onSave: (name: string, description: string) => void;
+  onDelete: () => void;
+}) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(board.name);
   const [description, setDescription] = useState(board.description ?? "");
@@ -122,7 +165,12 @@ function BoardRow({ board, onSave, onDelete }: { board: { id: string; name: stri
         }}
       >
         <input autoFocus value={name} onChange={(e) => setName(e.target.value)} className={`${input} w-48`} />
-        <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="One-line description" className={`${input} flex-1`} />
+        <input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="One-line description"
+          className={`${input} flex-1`}
+        />
         <Button size="sm" type="submit" disabled={!name.trim()}>
           Save
         </Button>

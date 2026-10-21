@@ -1,11 +1,11 @@
 import { ListIcon } from "@phosphor-icons/react";
-import { Outlet, createFileRoute, redirect, useLoaderData, useLocation, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useLoaderData, useLocation, useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 
 import { AdminRail, AdminSidebar } from "@/components/admin/sidebar";
+import { DemoBanner } from "@/components/demo-banner";
 import { NewPostDialog } from "@/components/new-post-dialog";
 import { DashboardErrorState, DashboardShellSkeleton } from "@/components/states";
-import { DemoBanner } from "@/components/demo-banner";
 import { isDemo } from "@/lib/demo";
 
 export const Route = createFileRoute("/dashboard")({
@@ -57,14 +57,24 @@ function AdminLayout() {
     <div className="flex h-dvh overflow-hidden bg-[#0a0a0b] text-foreground">
       {/* Desktop: icon rail always, filter column on Posts when open */}
       <aside className="hidden h-full shrink-0 md:flex" data-admin-sidebar>
-        {navOpen ? <AdminSidebar onNewPost={() => setComposing(true)} onCollapse={toggleNav} /> : <AdminRail onExpand={toggleNav} onNewPost={() => setComposing(true)} />}
+        {navOpen ? (
+          <AdminSidebar onNewPost={() => setComposing(true)} onCollapse={toggleNav} />
+        ) : (
+          <AdminRail onExpand={toggleNav} onNewPost={() => setComposing(true)} />
+        )}
       </aside>
       {/* Mobile sidebar sheet */}
       {mobileOpen ? (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
           <aside className="absolute inset-y-0 left-0 w-60 bg-[#0a0a0b] shadow-lg animate-in slide-in-from-left duration-200">
-            <AdminSidebar onNewPost={() => { setComposing(true); setMobileOpen(false); }} onCollapse={() => setMobileOpen(false)} />
+            <AdminSidebar
+              onNewPost={() => {
+                setComposing(true);
+                setMobileOpen(false);
+              }}
+              onCollapse={() => setMobileOpen(false)}
+            />
           </aside>
         </div>
       ) : null}

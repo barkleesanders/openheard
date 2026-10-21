@@ -1,9 +1,10 @@
 import { createDb, post } from "@openheard/db";
-import { workspaceFromRequest } from "@/lib/session";
 import { createFileRoute } from "@tanstack/react-router";
 import { and, eq, sql } from "drizzle-orm";
+import { workspaceFromRequest } from "@/lib/session";
 
-const esc = (s: string) => s.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" })[c]!);
+const esc = (s: string) =>
+  s.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" })[c]!);
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
@@ -15,8 +16,7 @@ export const Route = createFileRoute("/sitemap.xml")({
 
         const staticPages = ["/", "/roadmap", "/changelog", "/privacy", "/terms"];
         const urls: string[] = staticPages.map(
-          (path) =>
-            `  <url><loc>${esc(origin + path)}</loc><changefreq>weekly</changefreq></url>`,
+          (path) => `  <url><loc>${esc(origin + path)}</loc><changefreq>weekly</changefreq></url>`,
         );
 
         if (ws) {
@@ -28,9 +28,7 @@ export const Route = createFileRoute("/sitemap.xml")({
 
           for (const p of posts) {
             const lastmod = new Date(p.updatedAt).toISOString().split("T")[0];
-            urls.push(
-              `  <url><loc>${esc(`${origin}/p/${p.id}`)}</loc><lastmod>${lastmod}</lastmod></url>`,
-            );
+            urls.push(`  <url><loc>${esc(`${origin}/p/${p.id}`)}</loc><lastmod>${lastmod}</lastmod></url>`);
           }
         }
 

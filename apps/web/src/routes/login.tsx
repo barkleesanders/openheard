@@ -4,8 +4,8 @@ import { AuthForm } from "@/components/auth-form";
 import Logo from "@/components/logo";
 import { myWorkspaces } from "@/functions/admin";
 import { getUser } from "@/functions/get-user";
-import { getWorkspace } from "@/functions/workspace";
 import { getWorkspaceMemberCount } from "@/functions/invites";
+import { getWorkspace } from "@/functions/workspace";
 import { workspaceUrl } from "@/lib/workspace-url";
 
 type Search = { redirect?: string };

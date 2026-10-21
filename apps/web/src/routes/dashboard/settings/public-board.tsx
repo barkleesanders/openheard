@@ -1,5 +1,10 @@
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@openheard/ui/components/dropdown-menu";
 import { LoadingButton } from "@openheard/ui/components/interior/loading-button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@openheard/ui/components/dropdown-menu";
 import { CaretDownIcon } from "@phosphor-icons/react";
 import { createFileRoute, useLoaderData, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
@@ -23,7 +28,16 @@ function PublicBoard() {
   const dirty = theme !== (ws.theme === "light" ? "light" : "dark") || poweredBy !== ws.poweredBy;
 
   function save() {
-    saveWorkspace({ data: { name: ws.name, tagline: ws.tagline, theme, poweredBy, requireApproval: ws.requireApproval, accent: ws.accent } })
+    saveWorkspace({
+      data: {
+        name: ws.name,
+        tagline: ws.tagline,
+        theme,
+        poweredBy,
+        requireApproval: ws.requireApproval,
+        accent: ws.accent,
+      },
+    })
       .then(() => router.invalidate())
       .catch((err) => toast.error(err instanceof Error ? err.message : "Could not save"));
   }
@@ -54,7 +68,12 @@ function PublicBoard() {
       </Row>
       <div className="flex items-center justify-end gap-3 border-t pt-4">
         <span className="text-xs text-faint">{dirty ? "Unsaved changes" : "Saved"}</span>
-        <LoadingButton onAction={save} disabled={!dirty} successLabel="Saved" onError={(err) => toast.error(err instanceof Error ? err.message : "Could not save")}>
+        <LoadingButton
+          onAction={save}
+          disabled={!dirty}
+          successLabel="Saved"
+          onError={(err) => toast.error(err instanceof Error ? err.message : "Could not save")}
+        >
           Save
         </LoadingButton>
       </div>

@@ -2,13 +2,13 @@ import { createDb } from "@openheard/db";
 import * as schema from "@openheard/db/schema/auth";
 import { DEFAULT_STATUSES, membership, status, workspace } from "@openheard/db/schema/feedback";
 import { env } from "@openheard/env/server";
-import { betterAuth, type BetterAuthOptions, type SecondaryStorage } from "better-auth";
+import { type BetterAuthOptions, betterAuth, type SecondaryStorage } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { magicLink } from "better-auth/plugins";
-import { magicLinkEmail, passwordResetEmail } from "./email-template";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { eq } from "drizzle-orm";
+import { magicLinkEmail, passwordResetEmail } from "./email-template";
 
 type KV = {
   get(key: string): Promise<string | null>;
@@ -21,13 +21,21 @@ function createKvSecondaryStorage(store: KV): SecondaryStorage {
     async get(key: string) {
       const raw = await store.get(key);
       if (raw === null) return null;
-      try { return JSON.parse(raw); } catch { return raw; }
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return raw;
+      }
     },
     async getAndDelete(key: string) {
       const raw = await store.get(key);
       if (raw !== null) await store.delete(key);
       if (raw === null) return null;
-      try { return JSON.parse(raw); } catch { return raw; }
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return raw;
+      }
     },
     async increment(key: string, ttl: number) {
       const raw = await store.get(key);
@@ -48,7 +56,13 @@ function createKvSecondaryStorage(store: KV): SecondaryStorage {
 // Sending from a domain the account has not enabled for Email Sending fails,
 // so self-hosters set AUTH_EMAIL_FROM to an address on an enabled (sub)domain.
 type AuthMailer = {
-  send(message: { to: string; from: { email: string; name: string }; subject: string; html: string; text: string }): Promise<unknown>;
+  send(message: {
+    to: string;
+    from: { email: string; name: string };
+    subject: string;
+    html: string;
+    text: string;
+  }): Promise<unknown>;
 };
 
 export const DEFAULT_AUTH_FROM = { email: "hello@openheard.com", name: "openheard" };
@@ -196,20 +210,30 @@ export function createAuth(opts?: { demo?: boolean }) {
             return { data: { ...u, role: existing.length === 0 ? "admin" : "member" } };
           },
           after: async (u) => {
-            const [ws] = await db.select({ id: workspace.id }).from(workspace).where(eq(workspace.id, "default")).limit(1);
+            const [ws] = await db
+              .select({ id: workspace.id })
+              .from(workspace)
+              .where(eq(workspace.id, "default"))
+              .limit(1);
             if (!ws) {
               await db.insert(workspace).values({ id: "default" }).onConflictDoNothing();
-              await db.insert(status).values(DEFAULT_STATUSES.map((d, i) => ({ workspaceId: "default", ...d, position: i }))).onConflictDoNothing();
+              await db
+                .insert(status)
+                .values(DEFAULT_STATUSES.map((d, i) => ({ workspaceId: "default", ...d, position: i })))
+                .onConflictDoNothing();
             }
             const role = rootDomain
-              ? "member" as const
-              : (await db.select({ userId: membership.userId }).from(membership).where(eq(membership.workspaceId, "default")).limit(1)).length === 0
-                ? "admin" as const
-                : "member" as const;
-            await db
-              .insert(membership)
-              .values({ workspaceId: "default", userId: u.id, role })
-              .onConflictDoNothing();
+              ? ("member" as const)
+              : (
+                    await db
+                      .select({ userId: membership.userId })
+                      .from(membership)
+                      .where(eq(membership.workspaceId, "default"))
+                      .limit(1)
+                  ).length === 0
+                ? ("admin" as const)
+                : ("member" as const);
+            await db.insert(membership).values({ workspaceId: "default", userId: u.id, role }).onConflictDoNothing();
           },
         },
       },

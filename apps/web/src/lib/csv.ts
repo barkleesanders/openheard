@@ -65,10 +65,13 @@ export function toImportRows(records: Record<string, string>[]): ImportRow[] {
   if (records.length === 0) return [];
   const keys = Object.keys(records[0]!);
   const pick = (names: string[]) => keys.find((k) => names.includes(k.toLowerCase()));
-  const col = Object.fromEntries(Object.entries(COLS).map(([k, names]) => [k, pick(names)])) as Record<keyof typeof COLS, string | undefined>;
+  const col = Object.fromEntries(Object.entries(COLS).map(([k, names]) => [k, pick(names)])) as Record<
+    keyof typeof COLS,
+    string | undefined
+  >;
   return records
     .map((r) => {
-      const get = (k: keyof typeof COLS) => (col[k] ? r[col[k]!] ?? "" : "");
+      const get = (k: keyof typeof COLS) => (col[k] ? (r[col[k]!] ?? "") : "");
       const email = get("authorEmail");
       return {
         title: get("title"),

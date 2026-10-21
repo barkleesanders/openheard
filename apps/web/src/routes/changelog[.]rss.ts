@@ -1,9 +1,10 @@
 import { changelogEntry, createDb } from "@openheard/db";
-import { workspaceFromRequest } from "@/lib/session";
 import { createFileRoute } from "@tanstack/react-router";
 import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { workspaceFromRequest } from "@/lib/session";
 
-const esc = (s: string) => s.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" })[c]!);
+const esc = (s: string) =>
+  s.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" })[c]!);
 
 // Published changelog entries as RSS 2.0. Readers, Slack, and Zapier all eat this.
 export const Route = createFileRoute("/changelog.rss")({
@@ -41,7 +42,9 @@ export const Route = createFileRoute("/changelog.rss")({
 ${items}
   </channel>
 </rss>`;
-        return new Response(xml, { headers: { "content-type": "application/rss+xml; charset=utf-8", "cache-control": "public, max-age=300" } });
+        return new Response(xml, {
+          headers: { "content-type": "application/rss+xml; charset=utf-8", "cache-control": "public, max-age=300" },
+        });
       },
     },
   },

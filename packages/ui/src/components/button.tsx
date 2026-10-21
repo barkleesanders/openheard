@@ -16,8 +16,10 @@ const buttonVariants = cva(
           "bg-white text-[#0d0d0f] shadow-[inset_0_-1px_0_rgba(0,0,0,.14),0_1px_2px_rgba(0,0,0,.4)] hover:bg-[#f4f4f6] active:bg-[#e8e8ec] dark:bg-white",
         secondary:
           "border border-input bg-accent text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,.08)] hover:bg-[color-mix(in_oklch,var(--accent),white_4%)] hover:text-foreground active:bg-[color-mix(in_oklch,var(--accent),black_8%)] aria-expanded:text-foreground",
-        outline: "border border-border bg-transparent text-muted-foreground hover:border-input hover:bg-accent/60 hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
-        ghost: "text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
+        outline:
+          "border border-border bg-transparent text-muted-foreground hover:border-input hover:bg-accent/60 hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
+        ghost:
+          "text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
         destructive: "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:ring-destructive/40",
         link: "h-auto rounded-none p-0 text-link underline-offset-4 hover:underline",
       },
@@ -68,10 +70,27 @@ const arrowBox = cva(
 
 type ButtonProps = ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & { full?: boolean };
 
-function Button({ className, variant = "primary", size = "default", arrow = false, full, children, ...props }: ButtonProps) {
+function Button({
+  className,
+  variant = "primary",
+  size = "default",
+  arrow = false,
+  full,
+  children,
+  ...props
+}: ButtonProps) {
   const withArrow = !!arrow && size !== "icon" && size !== "icon-sm" && variant !== "link";
   return (
-    <ButtonPrimitive data-slot="button" className={cn(buttonVariants({ variant, size, arrow: withArrow }), full && "w-full", withArrow && "justify-start", className)} {...props}>
+    <ButtonPrimitive
+      data-slot="button"
+      className={cn(
+        buttonVariants({ variant, size, arrow: withArrow }),
+        full && "w-full",
+        withArrow && "justify-start",
+        className,
+      )}
+      {...props}
+    >
       {withArrow ? (
         <>
           <span className={cn(full && "flex-1 text-left")}>{children}</span>

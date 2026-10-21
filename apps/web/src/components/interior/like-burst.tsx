@@ -1,19 +1,12 @@
-import {
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 const EASE = [0.23, 1, 0.32, 1] as const;
 const CELL = { type: "spring", stiffness: 520, damping: 34, mass: 0.45 } as const;
 const CROSSFADE = { type: "spring", stiffness: 260, damping: 34, mass: 0.8 } as const;
 const INSTANT = { duration: 0 } as const;
 
-const HEART =
-  "M12 20.3 4.3 12.6a4.8 4.8 0 0 1 6.8-6.8l.9.9.9-.9a4.8 4.8 0 0 1 6.8 6.8Z";
+const HEART = "M12 20.3 4.3 12.6a4.8 4.8 0 0 1 6.8-6.8l.9.9.9-.9a4.8 4.8 0 0 1 6.8 6.8Z";
 
 export const BURST_EASE = EASE;
 
@@ -29,13 +22,9 @@ export const SPARKS = Array.from({ length: 8 }, (_, i) => {
   };
 });
 
-const DEFAULT_FORMAT = (value: number) =>
-  new Intl.NumberFormat("en-US").format(value);
+const DEFAULT_FORMAT = (value: number) => new Intl.NumberFormat("en-US").format(value);
 
-export type LikeCommit = (
-  liked: boolean,
-  signal: AbortSignal,
-) => Promise<unknown>;
+export type LikeCommit = (liked: boolean, signal: AbortSignal) => Promise<unknown>;
 
 export type LikeBurstHandle = {
   toggle: () => void;
@@ -204,8 +193,13 @@ export function LikeBurst({
   ref,
 }: LikeBurstProps & { ref?: React.Ref<LikeBurstHandle> }) {
   const reduced = useReducedMotion();
-  const { liked, count, base, pending, burst, settled, toggle } =
-    useOptimisticLike({ initialLiked, initialCount, onCommit, onError, settle });
+  const { liked, count, base, pending, burst, settled, toggle } = useOptimisticLike({
+    initialLiked,
+    initialCount,
+    onCommit,
+    onError,
+    settle,
+  });
 
   useImperativeHandle(ref, () => ({ toggle }), [toggle]);
 
@@ -256,10 +250,7 @@ export function LikeBurst({
           </motion.svg>
 
           {!reduced && burst > 0 ? (
-            <span
-              key={burst}
-              className="pointer-events-none absolute left-1/2 top-1/2 block size-0"
-            >
+            <span key={burst} className="pointer-events-none absolute left-1/2 top-1/2 block size-0">
               {SPARKS.map((spark, i) => (
                 <motion.span
                   key={i}
@@ -298,10 +289,7 @@ export function LikeBurst({
           </motion.span>
         </span>
 
-        <span
-          aria-hidden
-          className="grid overflow-hidden text-[12px] tabular-nums text-muted-foreground"
-        >
+        <span aria-hidden className="grid overflow-hidden text-[12px] tabular-nums text-muted-foreground">
           <span className="invisible col-start-1 row-start-1">{widest}</span>
           <AnimatePresence initial={false}>
             <motion.span
@@ -316,7 +304,6 @@ export function LikeBurst({
             </motion.span>
           </AnimatePresence>
         </span>
-
       </button>
 
       <span role="status" aria-live="polite" className="sr-only">

@@ -15,7 +15,10 @@ function getStore(): KV {
   return {
     async get(key: string) {
       const entry = memStore.get(key);
-      if (!entry || Date.now() > entry.expires) { memStore.delete(key); return null; }
+      if (!entry || Date.now() > entry.expires) {
+        memStore.delete(key);
+        return null;
+      }
       return String(entry.count);
     },
     async put(key: string, value: string, opts: { expirationTtl: number }) {

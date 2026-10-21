@@ -37,7 +37,10 @@ export default {
   async scheduled(_controller: ScheduledController, _env: unknown, ctx: ExecutionContext) {
     ctx.waitUntil(
       (async () => {
-        const [{ createDb }, { resetDemoWorkspace }] = await Promise.all([import("@openheard/db"), import("./lib/demo-db")]);
+        const [{ createDb }, { resetDemoWorkspace }] = await Promise.all([
+          import("@openheard/db"),
+          import("./lib/demo-db"),
+        ]);
         const { posts } = await resetDemoWorkspace(createDb());
         console.log(`demo reset: ${posts} posts`);
       })(),
@@ -49,12 +52,7 @@ async function handle(request: Request, ctx: ExecutionContext): Promise<Response
   const url = new URL(request.url);
   const cache = getEdgeCache();
 
-  if (
-    cache &&
-    request.method === "GET" &&
-    !hasSessionCookie(request) &&
-    isPublicCacheable(url.pathname)
-  ) {
+  if (cache && request.method === "GET" && !hasSessionCookie(request) && isPublicCacheable(url.pathname)) {
     const cacheKey = new Request(url.toString(), { method: "GET" });
     const cached = await cache.match(cacheKey);
     if (cached) {
@@ -109,15 +107,23 @@ function bounded(request: Request, url: URL): Promise<Response> {
   return new Promise<Response>((resolve, reject) => {
     const timer = setTimeout(() => {
       console.error(`request timeout: ${request.method} ${url.host}${url.pathname}`);
-      resolve(new Response("Service temporarily unavailable", {
-        status: 503,
-        headers: { "content-type": "text/plain" },
-      }));
+      resolve(
+        new Response("Service temporarily unavailable", {
+          status: 503,
+          headers: { "content-type": "text/plain" },
+        }),
+      );
     }, REQUEST_TIMEOUT_MS);
 
     Promise.resolve(handler(request)).then(
-      (res: Response) => { clearTimeout(timer); resolve(res); },
-      (err: unknown) => { clearTimeout(timer); reject(err); },
+      (res: Response) => {
+        clearTimeout(timer);
+        resolve(res);
+      },
+      (err: unknown) => {
+        clearTimeout(timer);
+        reject(err);
+      },
     );
   });
 }

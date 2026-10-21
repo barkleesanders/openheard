@@ -1,14 +1,24 @@
-import { activity, anonymousVote, board, comment, commentReaction, createDb, post, postTag, status, tag, vote } from "@openheard/db";
-
-import { purgeWorkspaceCache } from "@/lib/cache";
-import { assertStatus, listStatuses, statusOfKind } from "@/lib/status-db";
+import {
+  activity,
+  anonymousVote,
+  board,
+  comment,
+  commentReaction,
+  createDb,
+  post,
+  postTag,
+  status,
+  tag,
+  vote,
+} from "@openheard/db";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { and, desc, eq, inArray, like, or, sql } from "drizzle-orm";
 import { z } from "zod";
-
+import { purgeWorkspaceCache } from "@/lib/cache";
 import { invalidate } from "@/lib/kv-cache";
 import { requireAdmin, requireUser, sessionMiddleware } from "@/lib/session";
+import { assertStatus, listStatuses, statusOfKind } from "@/lib/status-db";
 
 function originFromRequest(): string {
   try {
@@ -24,19 +34,30 @@ function escapeLike(s: string) {
 
 // Every mutation checks the post is in this workspace before touching it.
 async function ownBoard(db: ReturnType<typeof createDb>, boardId: string, workspaceId: string) {
-  const [row] = await db.select({ id: board.id }).from(board).where(and(eq(board.id, boardId), eq(board.workspaceId, workspaceId))).limit(1);
+  const [row] = await db
+    .select({ id: board.id })
+    .from(board)
+    .where(and(eq(board.id, boardId), eq(board.workspaceId, workspaceId)))
+    .limit(1);
   if (!row) throw new Error("Board not found");
 }
 
 // Drops any tag id that does not belong to this workspace.
 async function ownTags(db: ReturnType<typeof createDb>, tagIds: string[], workspaceId: string): Promise<string[]> {
   if (!tagIds.length) return [];
-  const rows = await db.select({ id: tag.id }).from(tag).where(and(inArray(tag.id, tagIds), eq(tag.workspaceId, workspaceId)));
+  const rows = await db
+    .select({ id: tag.id })
+    .from(tag)
+    .where(and(inArray(tag.id, tagIds), eq(tag.workspaceId, workspaceId)));
   return rows.map((r) => r.id);
 }
 
 async function ownPost(db: ReturnType<typeof createDb>, postId: number, workspaceId: string) {
-  const [row] = await db.select({ id: post.id }).from(post).where(and(eq(post.id, postId), eq(post.workspaceId, workspaceId))).limit(1);
+  const [row] = await db
+    .select({ id: post.id })
+    .from(post)
+    .where(and(eq(post.id, postId), eq(post.workspaceId, workspaceId)))
+    .limit(1);
   if (!row) throw new Error("Post not found");
 }
 
@@ -57,13 +78,19 @@ export const listPosts = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     const db = createDb();
     const isAdmin = context.user?.role === "admin";
-    const reviewKeys = context.workspace.requireApproval && !isAdmin
-      ? (await listStatuses(db, context.workspace.id)).filter((s) => s.kind === "review").map((s) => s.key)
-      : [];
+    const reviewKeys =
+      context.workspace.requireApproval && !isAdmin
+        ? (await listStatuses(db, context.workspace.id)).filter((s) => s.kind === "review").map((s) => s.key)
+        : [];
     const where = and(
       eq(post.workspaceId, context.workspace.id),
       sql`${post.mergedIntoId} is null`,
-      reviewKeys.length ? sql`${post.status} not in (${sql.join(reviewKeys.map((k) => sql`${k}`), sql`, `)})` : undefined,
+      reviewKeys.length
+        ? sql`${post.status} not in (${sql.join(
+            reviewKeys.map((k) => sql`${k}`),
+            sql`, `,
+          )})`
+        : undefined,
       data.board ? eq(post.boardId, data.board) : undefined,
       data.status ? eq(post.status, data.status) : undefined,
       data.q ? or(like(post.title, `%${escapeLike(data.q)}%`), like(post.body, `%${escapeLike(data.q)}%`)) : undefined,
@@ -127,11 +154,18 @@ export const getPost = createServerFn({ method: "GET" })
         tags: { with: { tag: true } },
         comments: {
           where: context.user?.role === "admin" ? undefined : eq(comment.internal, false),
-          with: { author: { columns: { id: true, name: true, image: true, role: true } }, reactions: { columns: { userId: true, emoji: true } } },
+          with: {
+            author: { columns: { id: true, name: true, image: true, role: true } },
+            reactions: { columns: { userId: true, emoji: true } },
+          },
           orderBy: [desc(comment.createdAt)],
         },
         activity: { with: { actor: { columns: { id: true, name: true } } }, orderBy: [desc(activity.createdAt)] },
-        votes: { with: { user: { columns: { id: true, name: true, image: true } } }, orderBy: [desc(vote.createdAt)], limit: 8 },
+        votes: {
+          with: { user: { columns: { id: true, name: true, image: true } } },
+          orderBy: [desc(vote.createdAt)],
+          limit: 8,
+        },
       },
     });
     if (!p) return null;
@@ -145,7 +179,12 @@ export const getPost = createServerFn({ method: "GET" })
       }
     }
     const voted = context.user
-      ? (await db.select({ userId: vote.userId }).from(vote).where(and(eq(vote.postId, p.id), eq(vote.userId, context.user.id)))).length > 0
+      ? (
+          await db
+            .select({ userId: vote.userId })
+            .from(vote)
+            .where(and(eq(vote.postId, p.id), eq(vote.userId, context.user.id)))
+        ).length > 0
       : false;
     // Merge candidates: same board, shares a word of 5+ letters with the title.
     const words = p.title.toLowerCase().match(/[a-z]{5,}/g) ?? [];
@@ -153,14 +192,24 @@ export const getPost = createServerFn({ method: "GET" })
       ? await db
           .select({ id: post.id, title: post.title, voteCount: post.voteCount })
           .from(post)
-          .where(and(eq(post.workspaceId, p.workspaceId), sql`${post.id} != ${p.id}`, sql`${post.mergedIntoId} is null`, or(...words.slice(0, 4).map((w) => like(post.title, `%${escapeLike(w)}%`)))))
+          .where(
+            and(
+              eq(post.workspaceId, p.workspaceId),
+              sql`${post.id} != ${p.id}`,
+              sql`${post.mergedIntoId} is null`,
+              or(...words.slice(0, 4).map((w) => like(post.title, `%${escapeLike(w)}%`))),
+            ),
+          )
           .orderBy(desc(post.voteCount))
           .limit(3)
       : [];
     const mergedInto = p.mergedIntoId
       ? await db.query.post.findFirst({ where: eq(post.id, p.mergedIntoId), columns: { id: true, title: true } })
       : null;
-    const mergedFrom = await db.select({ id: post.id, title: post.title, voteCount: post.voteCount }).from(post).where(eq(post.mergedIntoId, p.id));
+    const mergedFrom = await db
+      .select({ id: post.id, title: post.title, voteCount: post.voteCount })
+      .from(post)
+      .where(eq(post.mergedIntoId, p.id));
     return {
       ...p,
       tags: p.tags.map((t) => t.tag),
@@ -187,7 +236,16 @@ export const getPost = createServerFn({ method: "GET" })
             }, {}),
           ),
         })),
-        ...p.activity.map((a) => ({ kind: "activity" as const, id: `a${a.id}`, at: a.createdAt, author: a.actor, type: a.type, from: a.fromStatus, to: a.toStatus, note: a.note })),
+        ...p.activity.map((a) => ({
+          kind: "activity" as const,
+          id: `a${a.id}`,
+          at: a.createdAt,
+          author: a.actor,
+          type: a.type,
+          from: a.fromStatus,
+          to: a.toStatus,
+          note: a.note,
+        })),
       ].sort((a, b) => +new Date(b.at) - +new Date(a.at)),
     };
   });
@@ -206,7 +264,8 @@ export const createPost = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const u = requireUser(context.user);
-    if (context.workspace.whoCanPost === "members" && u.role === "guest") throw new Error("Only team members can post on this board");
+    if (context.workspace.whoCanPost === "members" && u.role === "guest")
+      throw new Error("Only team members can post on this board");
     const db = createDb();
     await ownBoard(db, data.boardId, context.workspace.id);
     const tagIds = await ownTags(db, data.tags, context.workspace.id);
@@ -217,7 +276,15 @@ export const createPost = createServerFn({ method: "POST" })
     }
     const [created] = await db
       .insert(post)
-      .values({ workspaceId: context.workspace.id, boardId: data.boardId, authorId: u.id, title: data.title, body: data.body, voteCount: 1, status: initialStatus })
+      .values({
+        workspaceId: context.workspace.id,
+        boardId: data.boardId,
+        authorId: u.id,
+        title: data.title,
+        body: data.body,
+        voteCount: 1,
+        status: initialStatus,
+      })
       .returning({ id: post.id });
     await db.insert(vote).values({ postId: created.id, userId: u.id });
     if (tagIds.length) await db.insert(postTag).values(tagIds.map((tagId) => ({ postId: created.id, tagId })));
@@ -233,15 +300,24 @@ export const toggleVote = createServerFn({ method: "POST" })
     const u = requireUser(context.user);
     const db = createDb();
     await ownPost(db, data.postId, context.workspace.id);
-    const existing = await db.select().from(vote).where(and(eq(vote.postId, data.postId), eq(vote.userId, u.id)));
+    const existing = await db
+      .select()
+      .from(vote)
+      .where(and(eq(vote.postId, data.postId), eq(vote.userId, u.id)));
     if (existing.length) {
       await db.delete(vote).where(and(eq(vote.postId, data.postId), eq(vote.userId, u.id)));
-      await db.update(post).set({ voteCount: sql`max(${post.voteCount} - 1, 0)` }).where(eq(post.id, data.postId));
+      await db
+        .update(post)
+        .set({ voteCount: sql`max(${post.voteCount} - 1, 0)` })
+        .where(eq(post.id, data.postId));
       purgeWorkspaceCache(originFromRequest(), [data.postId]);
       return { voted: false };
     }
     await db.insert(vote).values({ postId: data.postId, userId: u.id });
-    await db.update(post).set({ voteCount: sql`${post.voteCount} + 1` }).where(eq(post.id, data.postId));
+    await db
+      .update(post)
+      .set({ voteCount: sql`${post.voteCount} + 1` })
+      .where(eq(post.id, data.postId));
     purgeWorkspaceCache(originFromRequest(), [data.postId]);
     return { voted: true };
   });
@@ -258,27 +334,47 @@ export const toggleAnonVote = createServerFn({ method: "POST" })
       .from(anonymousVote)
       .where(and(eq(anonymousVote.postId, data.postId), eq(anonymousVote.anonToken, data.anonToken)));
     if (existing.length) {
-      await db.delete(anonymousVote).where(and(eq(anonymousVote.postId, data.postId), eq(anonymousVote.anonToken, data.anonToken)));
-      await db.update(post).set({ voteCount: sql`max(${post.voteCount} - 1, 0)` }).where(eq(post.id, data.postId));
+      await db
+        .delete(anonymousVote)
+        .where(and(eq(anonymousVote.postId, data.postId), eq(anonymousVote.anonToken, data.anonToken)));
+      await db
+        .update(post)
+        .set({ voteCount: sql`max(${post.voteCount} - 1, 0)` })
+        .where(eq(post.id, data.postId));
       purgeWorkspaceCache(originFromRequest(), [data.postId]);
       return { voted: false };
     }
     await db.insert(anonymousVote).values({ postId: data.postId, anonToken: data.anonToken });
-    await db.update(post).set({ voteCount: sql`${post.voteCount} + 1` }).where(eq(post.id, data.postId));
+    await db
+      .update(post)
+      .set({ voteCount: sql`${post.voteCount} + 1` })
+      .where(eq(post.id, data.postId));
     purgeWorkspaceCache(originFromRequest(), [data.postId]);
     return { voted: true };
   });
 
 export const addComment = createServerFn({ method: "POST" })
   .middleware([sessionMiddleware])
-  .validator((d: unknown) => z.object({ postId: z.number().int(), body: z.string().trim().min(1).max(5000), internal: z.boolean().default(false) }).parse(d))
+  .validator((d: unknown) =>
+    z
+      .object({
+        postId: z.number().int(),
+        body: z.string().trim().min(1).max(5000),
+        internal: z.boolean().default(false),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     const u = requireUser(context.user);
     const internal = data.internal && u.role === "admin";
     const db = createDb();
     await ownPost(db, data.postId, context.workspace.id);
     await db.insert(comment).values({ postId: data.postId, authorId: u.id, body: data.body, internal });
-    if (!internal) await db.update(post).set({ commentCount: sql`${post.commentCount} + 1` }).where(eq(post.id, data.postId));
+    if (!internal)
+      await db
+        .update(post)
+        .set({ commentCount: sql`${post.commentCount} + 1` })
+        .where(eq(post.id, data.postId));
     if (!internal) purgeWorkspaceCache(originFromRequest(), [data.postId]);
     return { ok: true };
   });
@@ -291,12 +387,33 @@ export const toggleReaction = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const u = requireUser(context.user);
     const db = createDb();
-    const [c] = await db.select({ postId: comment.postId }).from(comment).where(eq(comment.id, data.commentId)).limit(1);
+    const [c] = await db
+      .select({ postId: comment.postId })
+      .from(comment)
+      .where(eq(comment.id, data.commentId))
+      .limit(1);
     if (!c) throw new Error("Comment not found");
     await ownPost(db, c.postId, context.workspace.id);
-    const existing = await db.select().from(commentReaction).where(and(eq(commentReaction.commentId, data.commentId), eq(commentReaction.userId, u.id), eq(commentReaction.emoji, data.emoji)));
+    const existing = await db
+      .select()
+      .from(commentReaction)
+      .where(
+        and(
+          eq(commentReaction.commentId, data.commentId),
+          eq(commentReaction.userId, u.id),
+          eq(commentReaction.emoji, data.emoji),
+        ),
+      );
     if (existing.length) {
-      await db.delete(commentReaction).where(and(eq(commentReaction.commentId, data.commentId), eq(commentReaction.userId, u.id), eq(commentReaction.emoji, data.emoji)));
+      await db
+        .delete(commentReaction)
+        .where(
+          and(
+            eq(commentReaction.commentId, data.commentId),
+            eq(commentReaction.userId, u.id),
+            eq(commentReaction.emoji, data.emoji),
+          ),
+        );
       return { on: false };
     }
     await db.insert(commentReaction).values({ commentId: data.commentId, userId: u.id, emoji: data.emoji });
@@ -307,7 +424,11 @@ export const toggleReaction = createServerFn({ method: "POST" })
 
 export const setStatus = createServerFn({ method: "POST" })
   .middleware([sessionMiddleware])
-  .validator((d: unknown) => z.object({ postId: z.number().int(), status: z.string().max(40), note: z.string().trim().max(2000).optional() }).parse(d))
+  .validator((d: unknown) =>
+    z
+      .object({ postId: z.number().int(), status: z.string().max(40), note: z.string().trim().max(2000).optional() })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     const u = requireAdmin(context.user);
     const db = createDb();
@@ -316,7 +437,16 @@ export const setStatus = createServerFn({ method: "POST" })
     const [current] = await db.select({ status: post.status }).from(post).where(eq(post.id, data.postId));
     if (!current || current.status === data.status) return { ok: true };
     await db.update(post).set({ status: data.status, statusChangedAt: new Date() }).where(eq(post.id, data.postId));
-    await db.insert(activity).values({ postId: data.postId, actorId: u.id, type: "status", fromStatus: current.status, toStatus: data.status, note: data.note || null });
+    await db
+      .insert(activity)
+      .values({
+        postId: data.postId,
+        actorId: u.id,
+        type: "status",
+        fromStatus: current.status,
+        toStatus: data.status,
+        note: data.note || null,
+      });
     void invalidate(`workspace:${context.workspace.id}`);
     purgeWorkspaceCache(originFromRequest(), [data.postId]);
     return { ok: true };
@@ -332,7 +462,9 @@ export const togglePin = createServerFn({ method: "POST" })
     const [current] = await db.select({ pinned: post.pinned }).from(post).where(eq(post.id, data.postId));
     if (!current) return { pinned: false };
     await db.update(post).set({ pinned: !current.pinned }).where(eq(post.id, data.postId));
-    await db.insert(activity).values({ postId: data.postId, actorId: u.id, type: "pin", note: current.pinned ? "unpinned" : "pinned" });
+    await db
+      .insert(activity)
+      .values({ postId: data.postId, actorId: u.id, type: "pin", note: current.pinned ? "unpinned" : "pinned" });
     purgeWorkspaceCache(originFromRequest(), [data.postId]);
     return { pinned: !current.pinned };
   });
@@ -349,18 +481,31 @@ export const mergePosts = createServerFn({ method: "POST" })
     await ownPost(db, data.from, context.workspace.id);
     await ownPost(db, data.into, context.workspace.id);
     const fromVotes = await db.select({ userId: vote.userId }).from(vote).where(eq(vote.postId, data.from));
-    const intoVotes = new Set((await db.select({ userId: vote.userId }).from(vote).where(eq(vote.postId, data.into))).map((v) => v.userId));
+    const intoVotes = new Set(
+      (await db.select({ userId: vote.userId }).from(vote).where(eq(vote.postId, data.into))).map((v) => v.userId),
+    );
     const moved = fromVotes.filter((v) => !intoVotes.has(v.userId));
     if (moved.length) await db.insert(vote).values(moved.map((v) => ({ postId: data.into, userId: v.userId })));
     await db.update(comment).set({ postId: data.into }).where(eq(comment.postId, data.from));
     const [{ c }] = await db.select({ c: sql<number>`count(*)` }).from(comment).where(eq(comment.postId, data.into));
-    await db.update(post).set({ voteCount: sql`${post.voteCount} + ${moved.length}`, commentCount: c }).where(eq(post.id, data.into));
+    await db
+      .update(post)
+      .set({ voteCount: sql`${post.voteCount} + ${moved.length}`, commentCount: c })
+      .where(eq(post.id, data.into));
     const closed = await statusOfKind(db, context.workspace.id, "closed");
-    await db.update(post).set({ mergedIntoId: data.into, status: closed?.key ?? "closed" }).where(eq(post.id, data.from));
+    await db
+      .update(post)
+      .set({ mergedIntoId: data.into, status: closed?.key ?? "closed" })
+      .where(eq(post.id, data.from));
     const [target] = await db.select({ title: post.title }).from(post).where(eq(post.id, data.into));
     const [source] = await db.select({ title: post.title }).from(post).where(eq(post.id, data.from));
     await db.insert(activity).values([
-      { postId: data.into, actorId: u.id, type: "merge", note: `merged "${source?.title}" into this, +${moved.length} votes` },
+      {
+        postId: data.into,
+        actorId: u.id,
+        type: "merge",
+        note: `merged "${source?.title}" into this, +${moved.length} votes`,
+      },
       { postId: data.from, actorId: u.id, type: "merge", note: `merged into "${target?.title}"` },
     ]);
     void invalidate(`workspace:${context.workspace.id}`);
@@ -387,7 +532,10 @@ export const setEta = createServerFn({ method: "POST" })
   .validator((d: unknown) => z.object({ postId: z.number().int(), eta: z.string().trim().max(40).nullable() }).parse(d))
   .handler(async ({ data, context }) => {
     requireAdmin(context.user);
-    await createDb().update(post).set({ eta: data.eta || null }).where(and(eq(post.id, data.postId), eq(post.workspaceId, context.workspace.id)));
+    await createDb()
+      .update(post)
+      .set({ eta: data.eta || null })
+      .where(and(eq(post.id, data.postId), eq(post.workspaceId, context.workspace.id)));
     purgeWorkspaceCache(originFromRequest(), [data.postId]);
     return { ok: true };
   });
@@ -400,17 +548,32 @@ export const getRoadmap = createServerFn({ method: "GET" })
     const db = createDb();
     const roadmapFilter = and(eq(status.workspaceId, context.workspace.id), eq(status.onRoadmap, true));
     const isAdmin = context.user?.role === "admin";
-    const statusFilter = context.workspace.requireApproval && !isAdmin
-      ? and(roadmapFilter, sql`${status.kind} != 'review'`)
-      : roadmapFilter;
+    const statusFilter =
+      context.workspace.requireApproval && !isAdmin
+        ? and(roadmapFilter, sql`${status.kind} != 'review'`)
+        : roadmapFilter;
     const rows = await db.query.post.findMany({
-      where: and(eq(post.workspaceId, context.workspace.id), sql`${post.mergedIntoId} is null`, data.board ? eq(post.boardId, data.board) : undefined, inArray(post.status, db.select({ key: status.key }).from(status).where(statusFilter))),
+      where: and(
+        eq(post.workspaceId, context.workspace.id),
+        sql`${post.mergedIntoId} is null`,
+        data.board ? eq(post.boardId, data.board) : undefined,
+        inArray(post.status, db.select({ key: status.key }).from(status).where(statusFilter)),
+      ),
       orderBy: [desc(post.pinned), desc(post.voteCount)],
       with: {
         tags: { with: { tag: true } },
         votes: context.user ? { where: eq(vote.userId, context.user.id), columns: { userId: true } } : { limit: 0 },
       },
-      columns: { id: true, title: true, status: true, boardId: true, voteCount: true, commentCount: true, eta: true, statusChangedAt: true },
+      columns: {
+        id: true,
+        title: true,
+        status: true,
+        boardId: true,
+        voteCount: true,
+        commentCount: true,
+        eta: true,
+        statusChangedAt: true,
+      },
     });
     return rows.map((r) => ({ ...r, tags: r.tags.map((t) => t.tag), voted: r.votes.length > 0, votes: undefined }));
   });
@@ -425,12 +588,20 @@ export const searchPosts = createServerFn({ method: "GET" })
     const words = data.q.toLowerCase().match(/[a-z0-9]{4,}/g) ?? [];
     const terms = words.length ? words.slice(0, 5) : [data.q.toLowerCase()];
     const escaped = terms.map(escapeLike);
-    const hits = sql.join(escaped.map((w) => sql`(lower(${post.title}) like ${"%" + w + "%"} escape '\\')`), sql` + `);
+    const hits = sql.join(
+      escaped.map((w) => sql`(lower(${post.title}) like ${"%" + w + "%"} escape '\\')`),
+      sql` + `,
+    );
     return db
       .select({ id: post.id, title: post.title, voteCount: post.voteCount, status: post.status })
       .from(post)
-      .where(and(eq(post.workspaceId, context.workspace.id), sql`${post.mergedIntoId} is null`, or(...escaped.map((w) => like(post.title, `%${w}%`)))))
+      .where(
+        and(
+          eq(post.workspaceId, context.workspace.id),
+          sql`${post.mergedIntoId} is null`,
+          or(...escaped.map((w) => like(post.title, `%${w}%`))),
+        ),
+      )
       .orderBy(desc(hits), desc(post.voteCount))
       .limit(8);
   });
-

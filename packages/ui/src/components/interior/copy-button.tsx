@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const EASE = [0.23, 1, 0.32, 1] as const;
 const CELL = { type: "spring", stiffness: 520, damping: 34, mass: 0.45 } as const;
@@ -28,8 +28,7 @@ function writeFallback(text: string): boolean {
   document.body.appendChild(area);
 
   const selection = document.getSelection();
-  const previous =
-    selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+  const previous = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
 
   area.select();
   let ok = false;
@@ -47,11 +46,7 @@ function writeFallback(text: string): boolean {
   return ok;
 }
 
-export function useCopyToClipboard({
-  timeout = 2000,
-  onCopy,
-  onError,
-}: UseCopyToClipboardOptions = {}) {
+export function useCopyToClipboard({ timeout = 2000, onCopy, onError }: UseCopyToClipboardOptions = {}) {
   const [status, setStatus] = useState<CopyStatus>("idle");
   const [ticket, setTicket] = useState(0);
 
@@ -232,9 +227,7 @@ export function CopyButton({
             key={key}
             initial={false}
             animate={
-              key === status
-                ? { opacity: 1, y: 0, filter: "blur(0px)" }
-                : { opacity: 0, y: 3, filter: "blur(3px)" }
+              key === status ? { opacity: 1, y: 0, filter: "blur(0px)" } : { opacity: 0, y: 3, filter: "blur(3px)" }
             }
             transition={fade}
             className="col-start-1 row-start-1 whitespace-nowrap"

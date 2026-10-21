@@ -17,7 +17,11 @@ export const Route = createFileRoute("/demo")({
         }
         const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for") ?? "local";
         // Hands out an admin session, so a limiter outage refuses rather than waves through.
-        const { allowed, retryAfter } = await rateLimit(`demo-session:${ip}`, { window: 60, max: 20, failClosed: true });
+        const { allowed, retryAfter } = await rateLimit(`demo-session:${ip}`, {
+          window: 60,
+          max: 20,
+          failClosed: true,
+        });
         if (!allowed) return rateLimitResponse(retryAfter ?? 60);
 
         const db = createDb();

@@ -1,5 +1,5 @@
-import { getSessionContext } from "@/lib/session";
 import { createFileRoute } from "@tanstack/react-router";
+import { getSessionContext } from "@/lib/session";
 
 export const Route = createFileRoute("/api/email-test")({
   server: {

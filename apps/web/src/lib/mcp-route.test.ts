@@ -2,18 +2,21 @@
 // connectors, health checks) issue a plain authenticated GET before they ever
 // speak JSON-RPC, and treat anything non-2xx as "failed to connect". These
 // drive the real route handlers against a real in-memory schema.
+
+import { readdirSync, readFileSync } from "node:fs";
 import { createClient } from "@libsql/client";
 import type { Db } from "@openheard/db";
 import * as schema from "@openheard/db/schema/index";
 import { drizzle } from "drizzle-orm/libsql";
-import { readFileSync, readdirSync } from "node:fs";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 const MIGRATIONS = new URL("../../../../packages/db/migrations/", import.meta.url).pathname;
 
 async function freshDb(): Promise<Db> {
   const client = createClient({ url: ":memory:" });
-  for (const file of readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).sort()) {
+  for (const file of readdirSync(MIGRATIONS)
+    .filter((f) => f.endsWith(".sql"))
+    .sort()) {
     await client.executeMultiple(readFileSync(MIGRATIONS + file, "utf8").replaceAll("--> statement-breakpoint", ""));
   }
   await client.execute("PRAGMA foreign_keys = ON");
@@ -67,7 +70,13 @@ describe("GET /api/mcp as a connectivity probe", () => {
     const res = await get(VALID_KEY);
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("application/json");
-    const body = (await res.json()) as { name: string; version: string; transport: string; tools: string[]; docs: string };
+    const body = (await res.json()) as {
+      name: string;
+      version: string;
+      transport: string;
+      tools: string[];
+      docs: string;
+    };
     expect(body.name).toBe("openheard");
     expect(body.transport).toBe("streamable-http");
     expect(body.tools).toHaveLength(10);

@@ -1,8 +1,7 @@
+import { Button } from "@openheard/ui/components/button";
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-
-import { Button } from "@openheard/ui/components/button";
 import Logo from "@/components/logo";
 import { getUser } from "@/functions/get-user";
 import { acceptInvite } from "@/functions/invites";

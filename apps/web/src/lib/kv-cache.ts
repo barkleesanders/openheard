@@ -1,6 +1,10 @@
 import { env } from "@openheard/env/server";
 
-type KV = { get(key: string, opts?: { type: "json" }): Promise<unknown>; put(key: string, value: string, opts?: { expirationTtl: number }): Promise<void>; delete(key: string): Promise<void> };
+type KV = {
+  get(key: string, opts?: { type: "json" }): Promise<unknown>;
+  put(key: string, value: string, opts?: { expirationTtl: number }): Promise<void>;
+  delete(key: string): Promise<void>;
+};
 
 function kv(): KV | null {
   return (env as unknown as { CACHE?: KV }).CACHE ?? null;

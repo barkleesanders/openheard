@@ -27,7 +27,10 @@ function Notifications() {
 
   return (
     <>
-      <PageHead title="Notifications" sub="What lands in your inbox for this workspace. Sending starts once an email provider is connected." />
+      <PageHead
+        title="Notifications"
+        sub="What lands in your inbox for this workspace. Sending starts once an email provider is connected."
+      />
       <SectionHead title="Email me when" />
       <Row label="Someone posts" help="A new post lands in Pending.">
         <Toggle on={form.notifyNewPost} onChange={(v) => setForm({ ...form, notifyNewPost: v })} label="New post" />
@@ -40,7 +43,12 @@ function Notifications() {
       </Row>
       <div className="flex items-center justify-end gap-3 border-t pt-4">
         <span className="text-xs text-faint">{dirty ? "Unsaved changes" : "Saved"}</span>
-        <LoadingButton onAction={save} disabled={!dirty} successLabel="Saved" onError={(err) => toast.error(err instanceof Error ? err.message : "Could not save")}>
+        <LoadingButton
+          onAction={save}
+          disabled={!dirty}
+          successLabel="Saved"
+          onError={(err) => toast.error(err instanceof Error ? err.message : "Could not save")}
+        >
           Save
         </LoadingButton>
       </div>

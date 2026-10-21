@@ -2,16 +2,10 @@ import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { cn } from "@openheard/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
-import * as React from "react";
+import type * as React from "react";
 
 function BubbleGroup({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="bubble-group"
-      className={cn("flex min-w-0 flex-col gap-2", className)}
-      {...props}
-    />
-  );
+  return <div data-slot="bubble-group" className={cn("flex min-w-0 flex-col gap-2", className)} {...props} />;
 }
 
 const bubbleVariants = cva(
@@ -120,4 +114,4 @@ function BubbleReactions({
   );
 }
 
-export { BubbleGroup, Bubble, BubbleContent, BubbleReactions };
+export { Bubble, BubbleContent, BubbleGroup, BubbleReactions };

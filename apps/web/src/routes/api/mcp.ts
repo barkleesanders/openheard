@@ -1,21 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
-import { authenticateApiKey, apiErrorResponse, apiJson } from "@/lib/api-auth";
-import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
 import {
-  queryListPosts,
-  queryGetPost,
-  mutateCreatePost,
-  mutateSetStatus,
   mutateAddComment,
-  queryStatuses,
-  queryBoards,
-  queryChangelog,
+  mutateCreatePost,
   mutateDraftChangelog,
   mutatePublishChangelog,
+  mutateSetStatus,
+  queryBoards,
+  queryChangelog,
+  queryGetPost,
+  queryListPosts,
+  queryStatuses,
 } from "@/lib/api-actions";
-import { z } from "zod";
+import { apiErrorResponse, apiJson, authenticateApiKey } from "@/lib/api-auth";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const MCP_SERVER_NAME = "openheard";
 const MCP_SERVER_VERSION = "0.1.0";
@@ -80,7 +80,12 @@ function createMcpServer(workspaceId: string, db: Parameters<typeof queryListPos
       author_email: z.string().optional().describe("Email of the post author (matches existing user if found)"),
     },
     async ({ title, board, body, author_email }) => {
-      const result = await mutateCreatePost(db, workspaceId, { title, body, boardId: board, authorEmail: author_email });
+      const result = await mutateCreatePost(db, workspaceId, {
+        title,
+        body,
+        boardId: board,
+        authorEmail: author_email,
+      });
       return { content: [{ type: "text" as const, text: JSON.stringify(result) }] };
     },
   );
@@ -121,25 +126,15 @@ function createMcpServer(workspaceId: string, db: Parameters<typeof queryListPos
     },
   );
 
-  server.tool(
-    "list_boards",
-    "List all boards in this workspace.",
-    {},
-    async () => {
-      const result = await queryBoards(db, workspaceId);
-      return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
-    },
-  );
+  server.tool("list_boards", "List all boards in this workspace.", {}, async () => {
+    const result = await queryBoards(db, workspaceId);
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  });
 
-  server.tool(
-    "list_changelog",
-    "List published changelog entries with linked posts.",
-    {},
-    async () => {
-      const result = await queryChangelog(db, workspaceId);
-      return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
-    },
-  );
+  server.tool("list_changelog", "List published changelog entries with linked posts.", {}, async () => {
+    const result = await queryChangelog(db, workspaceId);
+    return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }] };
+  });
 
   server.tool(
     "draft_changelog",
@@ -173,7 +168,10 @@ function createMcpServer(workspaceId: string, db: Parameters<typeof queryListPos
 
 async function handleMcp(request: Request): Promise<Response> {
   try {
-    const ip = request.headers.get("cf-connecting-ip") ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const ip =
+      request.headers.get("cf-connecting-ip") ??
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      "unknown";
     const auth = request.headers.get("authorization");
     const key = auth?.startsWith("Bearer ") ? auth.slice(7, 20) : ip;
     const rl = await rateLimit(`mcp:${key}`, { window: 60, max: 60 });

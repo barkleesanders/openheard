@@ -9,9 +9,7 @@
     "packages/auth/tsconfig.json",
     "packages/db/migrations"
   ],
-  "tests": [
-    "packages/auth/src/security.test.ts"
-  ],
+  "tests": ["packages/auth/src/security.test.ts"],
   "vitestConfig": "packages/auth/vitest.config.ts",
   "mutations": [
     {

@@ -1,17 +1,16 @@
 import { activity, board, comment, createDb, membership, post, postTag, status, vote, workspace } from "@openheard/db";
-
-import { purgeWorkspaceCache } from "@/lib/cache";
-import { seedStatuses } from "@/lib/status-db";
 import { user } from "@openheard/db/schema/auth";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { and, asc, count, desc, eq, gt, inArray, lte, ne, sql } from "drizzle-orm";
 import { z } from "zod";
+import { purgeWorkspaceCache } from "@/lib/cache";
+import { assertNotDemo, assertNotDemoIdentity, DEMO_ADMIN_ID } from "@/lib/demo";
 
 import { invalidate } from "@/lib/kv-cache";
 import { PLANS } from "@/lib/plans";
-import { DEMO_ADMIN_ID, assertNotDemo, assertNotDemoIdentity } from "@/lib/demo";
 import { requireAdmin, requireUser, sessionMiddleware } from "@/lib/session";
+import { seedStatuses } from "@/lib/status-db";
 
 const DAY = 86_400_000;
 
@@ -28,23 +27,64 @@ export const getOverview = createServerFn({ method: "GET" })
     const inWs = db.select({ id: post.id }).from(post).where(eq(post.workspaceId, wsId));
 
     const [openRows, doneRows] = await db.batch([
-      db.select().from(status).where(and(eq(status.workspaceId, wsId), eq(status.kind, "open"))).orderBy(asc(status.position)).limit(1),
-      db.select().from(status).where(and(eq(status.workspaceId, wsId), eq(status.kind, "done"))).orderBy(asc(status.position)).limit(1),
+      db
+        .select()
+        .from(status)
+        .where(and(eq(status.workspaceId, wsId), eq(status.kind, "open")))
+        .orderBy(asc(status.position))
+        .limit(1),
+      db
+        .select()
+        .from(status)
+        .where(and(eq(status.workspaceId, wsId), eq(status.kind, "done")))
+        .orderBy(asc(status.position))
+        .limit(1),
     ] as const);
     const openKey = openRows[0]?.key ?? "open";
     const doneKey = doneRows[0]?.key ?? "done";
 
     const twoWeeks = new Date(Date.now() - 14 * DAY);
     const twoMonths = new Date(Date.now() - 60 * DAY);
-    const [[votesWeek], [votesPrev], [commentsWeek], [commentsPrev], [shippedMonth], [shippedPrev], [pending]] = await db.batch([
-      db.select({ n: sql<number>`count(*)`, posts: sql<number>`count(distinct ${vote.postId})` }).from(vote).where(and(gt(vote.createdAt, week), inArray(vote.postId, inWs))),
-      db.select({ n: sql<number>`count(*)` }).from(vote).where(and(gt(vote.createdAt, twoWeeks), lte(vote.createdAt, week), inArray(vote.postId, inWs))),
-      db.select({ n: sql<number>`count(*)` }).from(comment).where(and(gt(comment.createdAt, week), eq(comment.internal, false), inArray(comment.postId, inWs))),
-      db.select({ n: sql<number>`count(*)` }).from(comment).where(and(gt(comment.createdAt, twoWeeks), lte(comment.createdAt, week), eq(comment.internal, false), inArray(comment.postId, inWs))),
-      db.select({ n: sql<number>`count(*)` }).from(post).where(and(live, eq(post.status, doneKey), gt(post.statusChangedAt, month))),
-      db.select({ n: sql<number>`count(*)` }).from(post).where(and(live, eq(post.status, doneKey), gt(post.statusChangedAt, twoMonths), lte(post.statusChangedAt, month))),
-      db.select({ n: sql<number>`count(*)` }).from(post).where(and(live, eq(post.status, openKey))),
-    ] as const);
+    const [[votesWeek], [votesPrev], [commentsWeek], [commentsPrev], [shippedMonth], [shippedPrev], [pending]] =
+      await db.batch([
+        db
+          .select({ n: sql<number>`count(*)`, posts: sql<number>`count(distinct ${vote.postId})` })
+          .from(vote)
+          .where(and(gt(vote.createdAt, week), inArray(vote.postId, inWs))),
+        db
+          .select({ n: sql<number>`count(*)` })
+          .from(vote)
+          .where(and(gt(vote.createdAt, twoWeeks), lte(vote.createdAt, week), inArray(vote.postId, inWs))),
+        db
+          .select({ n: sql<number>`count(*)` })
+          .from(comment)
+          .where(and(gt(comment.createdAt, week), eq(comment.internal, false), inArray(comment.postId, inWs))),
+        db
+          .select({ n: sql<number>`count(*)` })
+          .from(comment)
+          .where(
+            and(
+              gt(comment.createdAt, twoWeeks),
+              lte(comment.createdAt, week),
+              eq(comment.internal, false),
+              inArray(comment.postId, inWs),
+            ),
+          ),
+        db
+          .select({ n: sql<number>`count(*)` })
+          .from(post)
+          .where(and(live, eq(post.status, doneKey), gt(post.statusChangedAt, month))),
+        db
+          .select({ n: sql<number>`count(*)` })
+          .from(post)
+          .where(
+            and(live, eq(post.status, doneKey), gt(post.statusChangedAt, twoMonths), lte(post.statusChangedAt, month)),
+          ),
+        db
+          .select({ n: sql<number>`count(*)` })
+          .from(post)
+          .where(and(live, eq(post.status, openKey))),
+      ] as const);
 
     // "Needs a reply": open posts where nobody on the team has commented yet.
     const teamComment = db
@@ -62,14 +102,47 @@ export const getOverview = createServerFn({ method: "GET" })
     const oldest = needsReply.length ? Math.max(...needsReply.map((p) => Date.now() - +new Date(p.createdAt))) : 0;
 
     const [recentVotes, recentComments, recentActivity] = await Promise.all([
-      db.query.vote.findMany({ where: inArray(vote.postId, inWs), orderBy: [desc(vote.createdAt)], limit: 6, with: { user: { columns: { name: true, image: true } }, post: { columns: { id: true, title: true } } } }),
-      db.query.comment.findMany({ where: and(eq(comment.internal, false), inArray(comment.postId, inWs)), orderBy: [desc(comment.createdAt)], limit: 6, with: { author: { columns: { name: true, image: true } }, post: { columns: { id: true, title: true } } } }),
-      db.query.activity.findMany({ where: and(eq(activity.type, "status"), inArray(activity.postId, inWs)), orderBy: [desc(activity.createdAt)], limit: 6, with: { actor: { columns: { name: true, image: true } }, post: { columns: { id: true, title: true } } } }),
+      db.query.vote.findMany({
+        where: inArray(vote.postId, inWs),
+        orderBy: [desc(vote.createdAt)],
+        limit: 6,
+        with: { user: { columns: { name: true, image: true } }, post: { columns: { id: true, title: true } } },
+      }),
+      db.query.comment.findMany({
+        where: and(eq(comment.internal, false), inArray(comment.postId, inWs)),
+        orderBy: [desc(comment.createdAt)],
+        limit: 6,
+        with: { author: { columns: { name: true, image: true } }, post: { columns: { id: true, title: true } } },
+      }),
+      db.query.activity.findMany({
+        where: and(eq(activity.type, "status"), inArray(activity.postId, inWs)),
+        orderBy: [desc(activity.createdAt)],
+        limit: 6,
+        with: { actor: { columns: { name: true, image: true } }, post: { columns: { id: true, title: true } } },
+      }),
     ]);
     const feed = [
-      ...recentVotes.map((v) => ({ kind: "vote" as const, at: v.createdAt, who: v.user, post: v.post, to: null as string | null })),
-      ...recentComments.map((c) => ({ kind: "comment" as const, at: c.createdAt, who: c.author, post: c.post, to: null as string | null })),
-      ...recentActivity.map((a) => ({ kind: "status" as const, at: a.createdAt, who: a.actor, post: a.post, to: a.toStatus })),
+      ...recentVotes.map((v) => ({
+        kind: "vote" as const,
+        at: v.createdAt,
+        who: v.user,
+        post: v.post,
+        to: null as string | null,
+      })),
+      ...recentComments.map((c) => ({
+        kind: "comment" as const,
+        at: c.createdAt,
+        who: c.author,
+        post: c.post,
+        to: null as string | null,
+      })),
+      ...recentActivity.map((a) => ({
+        kind: "status" as const,
+        at: a.createdAt,
+        who: a.actor,
+        post: a.post,
+        to: a.toStatus,
+      })),
     ]
       .sort((a, b) => +new Date(b.at) - +new Date(a.at))
       .slice(0, 8);
@@ -94,7 +167,16 @@ export const getOverview = createServerFn({ method: "GET" })
 // The inbox list: one status at a time, newest first by default.
 export const listInbox = createServerFn({ method: "GET" })
   .middleware([sessionMiddleware])
-  .validator((d: unknown) => z.object({ status: z.string().max(40).optional(), sort: z.enum(["new", "top", "old"]).default("new"), board: z.string().optional(), tag: z.string().optional() }).parse(d ?? {}))
+  .validator((d: unknown) =>
+    z
+      .object({
+        status: z.string().max(40).optional(),
+        sort: z.enum(["new", "top", "old"]).default("new"),
+        board: z.string().optional(),
+        tag: z.string().optional(),
+      })
+      .parse(d ?? {}),
+  )
   .handler(async ({ data, context }) => {
     requireAdmin(context.user);
     const db = createDb();
@@ -104,12 +186,28 @@ export const listInbox = createServerFn({ method: "GET" })
         sql`${post.mergedIntoId} is null`,
         data.status ? eq(post.status, data.status) : undefined,
         data.board ? eq(post.boardId, data.board) : undefined,
-        data.tag ? inArray(post.id, db.select({ id: postTag.postId }).from(postTag).where(eq(postTag.tagId, data.tag))) : undefined,
+        data.tag
+          ? inArray(post.id, db.select({ id: postTag.postId }).from(postTag).where(eq(postTag.tagId, data.tag)))
+          : undefined,
       ),
-      orderBy: data.sort === "top" ? [desc(post.voteCount)] : data.sort === "old" ? [post.createdAt] : [desc(post.createdAt)],
+      orderBy:
+        data.sort === "top" ? [desc(post.voteCount)] : data.sort === "old" ? [post.createdAt] : [desc(post.createdAt)],
       limit: 100,
-      with: { author: { columns: { name: true, image: true } }, board: { columns: { id: true, name: true } }, tags: { with: { tag: { columns: { id: true, name: true } } } } },
-      columns: { id: true, title: true, body: true, status: true, voteCount: true, commentCount: true, createdAt: true, pinned: true },
+      with: {
+        author: { columns: { name: true, image: true } },
+        board: { columns: { id: true, name: true } },
+        tags: { with: { tag: { columns: { id: true, name: true } } } },
+      },
+      columns: {
+        id: true,
+        title: true,
+        body: true,
+        status: true,
+        voteCount: true,
+        commentCount: true,
+        createdAt: true,
+        pinned: true,
+      },
     });
     // Trending: the three posts with the most votes this week, and at least three.
     const week = new Date(Date.now() - 7 * DAY);
@@ -118,14 +216,28 @@ export const listInbox = createServerFn({ method: "GET" })
         await db
           .select({ postId: vote.postId, n: sql<number>`count(*)` })
           .from(vote)
-          .where(and(gt(vote.createdAt, week), inArray(vote.postId, rows.map((r) => r.id))))
+          .where(
+            and(
+              gt(vote.createdAt, week),
+              inArray(
+                vote.postId,
+                rows.map((r) => r.id),
+              ),
+            ),
+          )
           .groupBy(vote.postId)
           .having(sql`count(*) >= 3`)
           .orderBy(desc(sql`count(*)`))
           .limit(3)
       ).map((v) => v.postId),
     );
-    return rows.map((r) => ({ ...r, tags: r.tags.map((t) => t.tag), trending: hot.has(r.id), excerpt: r.body.length > 120 ? r.body.slice(0, 117).trimEnd() + "…" : r.body, body: undefined }));
+    return rows.map((r) => ({
+      ...r,
+      tags: r.tags.map((t) => t.tag),
+      trending: hot.has(r.id),
+      excerpt: r.body.length > 120 ? r.body.slice(0, 117).trimEnd() + "…" : r.body,
+      body: undefined,
+    }));
   });
 
 export const listMembers = createServerFn({ method: "GET" })
@@ -136,7 +248,14 @@ export const listMembers = createServerFn({ method: "GET" })
     assertNotDemo(context.workspace);
     const db = createDb();
     return db
-      .select({ id: user.id, name: user.name, email: user.email, image: user.image, role: membership.role, createdAt: membership.createdAt })
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        role: membership.role,
+        createdAt: membership.createdAt,
+      })
       .from(membership)
       .innerJoin(user, eq(user.id, membership.userId))
       .where(eq(membership.workspaceId, context.workspace.id))
@@ -168,9 +287,16 @@ export const setBoard = createServerFn({ method: "POST" })
     const db = createDb();
     // Board ids are global, so a post could otherwise be parked on another
     // workspace's board and be deleted along with it.
-    const [target] = await db.select({ id: board.id }).from(board).where(and(eq(board.id, data.boardId), eq(board.workspaceId, context.workspace.id))).limit(1);
+    const [target] = await db
+      .select({ id: board.id })
+      .from(board)
+      .where(and(eq(board.id, data.boardId), eq(board.workspaceId, context.workspace.id)))
+      .limit(1);
     if (!target) throw new Error("Board not found");
-    await db.update(post).set({ boardId: data.boardId }).where(and(eq(post.id, data.postId), eq(post.workspaceId, context.workspace.id)));
+    await db
+      .update(post)
+      .set({ boardId: data.boardId })
+      .where(and(eq(post.id, data.postId), eq(post.workspaceId, context.workspace.id)));
     void invalidate(`workspace:${context.workspace.id}`);
     purgeWorkspaceCache(new URL(getRequest().url).origin, [data.postId]);
     return { ok: true };
@@ -212,7 +338,11 @@ export const checkSlug = createServerFn({ method: "GET" })
     if (!taken) return { available: true, slug: id, suggestion: null };
     for (let i = 2; i <= 20; i++) {
       const candidate = `${id}-${i}`.slice(0, 32);
-      const [exists] = await db.select({ id: workspace.id }).from(workspace).where(eq(workspace.id, candidate)).limit(1);
+      const [exists] = await db
+        .select({ id: workspace.id })
+        .from(workspace)
+        .where(eq(workspace.id, candidate))
+        .limit(1);
       if (!exists && !RESERVED_SLUGS.includes(candidate)) {
         return { available: false, slug: id, suggestion: candidate };
       }
@@ -222,7 +352,17 @@ export const checkSlug = createServerFn({ method: "GET" })
 
 export const createWorkspace = createServerFn({ method: "POST" })
   .middleware([sessionMiddleware])
-  .validator((d: unknown) => z.object({ name: z.string().trim().min(2).max(60), slug: z.string().trim().min(2).max(32).optional(), website: z.string().trim().url().max(200).optional().or(z.literal("")), heardAboutUs: z.string().trim().max(100).optional().or(z.literal("")), whoCanPost: z.enum(["anyone", "members"]).optional() }).parse(d))
+  .validator((d: unknown) =>
+    z
+      .object({
+        name: z.string().trim().min(2).max(60),
+        slug: z.string().trim().min(2).max(32).optional(),
+        website: z.string().trim().url().max(200).optional().or(z.literal("")),
+        heardAboutUs: z.string().trim().max(100).optional().or(z.literal("")),
+        whoCanPost: z.enum(["anyone", "members"]).optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     const u = requireUser(context.user);
     assertNotDemo(context.workspace);
@@ -230,31 +370,60 @@ export const createWorkspace = createServerFn({ method: "POST" })
     // reaches the apex host, where the workspace resolves to default.
     assertNotDemoIdentity(u);
     const db = createDb();
-    const [{ n: owned }] = await db.select({ n: count() }).from(membership).where(and(eq(membership.userId, u.id), eq(membership.role, "admin"), ne(membership.workspaceId, "default")));
+    const [{ n: owned }] = await db
+      .select({ n: count() })
+      .from(membership)
+      .where(and(eq(membership.userId, u.id), eq(membership.role, "admin"), ne(membership.workspaceId, "default")));
     const [acct] = await db.select({ plan: user.plan }).from(user).where(eq(user.id, u.id)).limit(1);
     const limit = PLANS[acct?.plan ?? "free"].workspaces;
-    if (owned >= limit) throw new Error(acct?.plan === "pro" ? `Pro allows ${limit} workspaces` : `Free allows ${limit} workspaces. Upgrade to Pro for ${PLANS.pro.workspaces}.`);
+    if (owned >= limit)
+      throw new Error(
+        acct?.plan === "pro"
+          ? `Pro allows ${limit} workspaces`
+          : `Free allows ${limit} workspaces. Upgrade to Pro for ${PLANS.pro.workspaces}.`,
+      );
     const id = slugify(data.slug || data.name);
     // checkSlug applies the same floor; the mutation cannot rely on it.
     if (!id || id.length < 5 || RESERVED_SLUGS.includes(id)) throw new Error("Pick a different slug");
     const [taken] = await db.select({ id: workspace.id }).from(workspace).where(eq(workspace.id, id)).limit(1);
     if (taken) throw new Error("That slug is taken");
-    await db.insert(workspace).values({ id, name: data.name, website: data.website || null, heardAboutUs: data.heardAboutUs || null, ...(data.whoCanPost ? { whoCanPost: data.whoCanPost } : {}) });
+    await db
+      .insert(workspace)
+      .values({
+        id,
+        name: data.name,
+        website: data.website || null,
+        heardAboutUs: data.heardAboutUs || null,
+        ...(data.whoCanPost ? { whoCanPost: data.whoCanPost } : {}),
+      });
     await db.insert(membership).values({ workspaceId: id, userId: u.id, role: "admin" });
     await seedStatuses(db, id);
-    await db.insert(board).values({ id: `${id}-features`, workspaceId: id, name: "Feature requests", description: "Things you wish the product did", position: 0 });
+    await db
+      .insert(board)
+      .values({
+        id: `${id}-features`,
+        workspaceId: id,
+        name: "Feature requests",
+        description: "Things you wish the product did",
+        position: 0,
+      });
     return { id };
   });
 
 // Roadmap admin: all non-merged posts in roadmap statuses, grouped by status.
 export const listRoadmapAdmin = createServerFn({ method: "GET" })
   .middleware([sessionMiddleware])
-  .validator((d: unknown) => z.object({ sort: z.enum(["top", "new"]).default("top"), board: z.string().optional() }).parse(d ?? {}))
+  .validator((d: unknown) =>
+    z.object({ sort: z.enum(["top", "new"]).default("top"), board: z.string().optional() }).parse(d ?? {}),
+  )
   .handler(async ({ data, context }) => {
     requireAdmin(context.user);
     const db = createDb();
     const wsId = context.workspace.id;
-    const roadmapKeys = db.select({ key: status.key }).from(status).where(and(eq(status.workspaceId, wsId), eq(status.onRoadmap, true)));
+    const roadmapKeys = db
+      .select({ key: status.key })
+      .from(status)
+      .where(and(eq(status.workspaceId, wsId), eq(status.onRoadmap, true)));
     const rows = await db.query.post.findMany({
       where: and(
         eq(post.workspaceId, wsId),
@@ -265,7 +434,15 @@ export const listRoadmapAdmin = createServerFn({ method: "GET" })
       orderBy: data.sort === "new" ? [desc(post.createdAt)] : [desc(post.voteCount)],
       limit: 200,
       with: { board: { columns: { id: true, name: true } } },
-      columns: { id: true, title: true, status: true, boardId: true, voteCount: true, commentCount: true, pinned: true },
+      columns: {
+        id: true,
+        title: true,
+        status: true,
+        boardId: true,
+        voteCount: true,
+        commentCount: true,
+        pinned: true,
+      },
     });
     return rows;
   });

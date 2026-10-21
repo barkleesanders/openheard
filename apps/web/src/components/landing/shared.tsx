@@ -1,6 +1,5 @@
-import type { ReactNode } from "react";
-
 import { cn } from "@openheard/ui/lib/utils";
+import type { ReactNode } from "react";
 
 // Framing copied from the magicui agent template, measured from its source:
 //
@@ -26,12 +25,23 @@ export function Page({ children, className }: { children: ReactNode; className?:
 }
 
 function Stripes({ side }: { side: "left" | "right" }) {
-  return <div aria-hidden className={cn("absolute top-0 hidden h-full w-14 bg-[size:10px_10px] text-foreground/5 [background-image:repeating-linear-gradient(315deg,currentColor_0_1px,#0000_0_50%)] md:block", side === "left" ? "-left-14" : "-right-14")} />;
+  return (
+    <div
+      aria-hidden
+      className={cn(
+        "absolute top-0 hidden h-full w-14 bg-[size:10px_10px] text-foreground/5 [background-image:repeating-linear-gradient(315deg,currentColor_0_1px,#0000_0_50%)] md:block",
+        side === "left" ? "-left-14" : "-right-14",
+      )}
+    />
+  );
 }
 
 export function Framed({ id, children, className }: { id?: string; children: ReactNode; className?: string }) {
   return (
-    <section id={id} className={cn("relative flex w-full scroll-mt-16 flex-col items-center justify-center px-0 md:px-10", className)}>
+    <section
+      id={id}
+      className={cn("relative flex w-full scroll-mt-16 flex-col items-center justify-center px-0 md:px-10", className)}
+    >
       <div className="relative w-full border-x border-border md:mx-10">
         <Stripes side="left" />
         <Stripes side="right" />
@@ -41,7 +51,17 @@ export function Framed({ id, children, className }: { id?: string; children: Rea
   );
 }
 
-export function SectionHeader({ title, sub, eyebrow, className }: { title: ReactNode; sub?: ReactNode; eyebrow?: string; className?: string }) {
+export function SectionHeader({
+  title,
+  sub,
+  eyebrow,
+  className,
+}: {
+  title: ReactNode;
+  sub?: ReactNode;
+  eyebrow?: string;
+  className?: string;
+}) {
   return (
     <div className={cn("h-full w-full border-b border-border p-6 md:p-14", className)}>
       <div className="mx-auto flex max-w-xl flex-col items-center justify-center gap-2 text-center">
@@ -59,13 +79,31 @@ export function Eyebrow({ children, className }: { children: ReactNode; classNam
 
 // Product screenshot in a hairline frame. Crops from the top-left so the
 // header and first rows of the real app are what you see.
-export function Shot({ src, alt = "", className, imgClassName }: { src: string; alt?: string; className?: string; imgClassName?: string }) {
+export function Shot({
+  src,
+  alt = "",
+  className,
+  imgClassName,
+}: {
+  src: string;
+  alt?: string;
+  className?: string;
+  imgClassName?: string;
+}) {
   const webp = src.replace(/\.png$/, ".webp");
   return (
     <div className={cn("relative overflow-hidden rounded-xl border border-input bg-card", className)}>
       <picture>
         <source srcSet={webp} type="image/webp" />
-        <img src={src} alt={alt} width={1920} height={1080} className={cn("block w-full", imgClassName)} loading="lazy" decoding="async" />
+        <img
+          src={src}
+          alt={alt}
+          width={1920}
+          height={1080}
+          className={cn("block w-full", imgClassName)}
+          loading="lazy"
+          decoding="async"
+        />
       </picture>
     </div>
   );

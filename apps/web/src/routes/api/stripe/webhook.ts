@@ -28,7 +28,12 @@ export const Route = createFileRoute("/api/stripe/webhook")({
           const customer = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
           const active = sub.status === "active" || sub.status === "trialing" || sub.status === "past_due";
           const end = sub.items.data[0]?.current_period_end;
-          const patch = { plan: active ? ("pro" as const) : ("free" as const), stripeSubscriptionId: active ? sub.id : null, planRenewsAt: active && end ? new Date(end * 1000) : null, stripeCustomerId: customer };
+          const patch = {
+            plan: active ? ("pro" as const) : ("free" as const),
+            stripeSubscriptionId: active ? sub.id : null,
+            planRenewsAt: active && end ? new Date(end * 1000) : null,
+            stripeCustomerId: customer,
+          };
           if (userId) await db.update(user).set(patch).where(eq(user.id, userId));
           else await db.update(user).set(patch).where(eq(user.stripeCustomerId, customer));
         }
@@ -37,7 +42,9 @@ export const Route = createFileRoute("/api/stripe/webhook")({
           case "checkout.session.completed": {
             const s = event.data.object;
             if (s.mode === "subscription" && s.subscription) {
-              const sub = await stripe.subscriptions.retrieve(typeof s.subscription === "string" ? s.subscription : s.subscription.id);
+              const sub = await stripe.subscriptions.retrieve(
+                typeof s.subscription === "string" ? s.subscription : s.subscription.id,
+              );
               await apply(sub, s.client_reference_id);
             }
             break;

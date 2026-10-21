@@ -1,16 +1,15 @@
+import { cn } from "@openheard/ui/lib/utils";
 import { CaretUpIcon } from "@phosphor-icons/react";
 import { useRouter } from "@tanstack/react-router";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
 import { BURST_EASE, SPARKS } from "@/components/interior/like-burst";
 import { useValueFlash } from "@/components/interior/value-flash";
 import { toggleAnonVote, toggleVote } from "@/functions/posts";
 import { getAnonToken, getAnonVotes, setAnonVoted } from "@/lib/anon-vote";
 import { openSignIn } from "@/lib/pending-action";
 import { useOptimisticVote } from "@/lib/use-optimistic-vote";
-import { cn } from "@openheard/ui/lib/utils";
 
 const CELL = { type: "spring", stiffness: 520, damping: 34, mass: 0.45 } as const;
 const FLIP = { type: "spring", stiffness: 260, damping: 34, mass: 0.8 } as const;
@@ -163,7 +162,9 @@ export function VoteButton({
         style={{ touchAction: "manipulation" }}
         className={cn(
           "relative inline-flex h-6 shrink-0 items-center gap-1 overflow-visible rounded-md border px-1.5 pr-2 font-mono text-[12px] transition-colors duration-150 before:absolute before:-inset-[10px] before:content-['']",
-          on ? "border-link bg-link text-[#0d0d0f]" : "border-input bg-secondary text-foreground hover:border-foreground/30",
+          on
+            ? "border-link bg-link text-[#0d0d0f]"
+            : "border-input bg-secondary text-foreground hover:border-foreground/30",
           className,
         )}
       >
@@ -195,7 +196,12 @@ export function VoteButton({
         className,
       )}
     >
-      <motion.span initial={false} animate={{ y: on ? -1 : 0 }} transition={reduced ? INSTANT : CELL} className="relative flex">
+      <motion.span
+        initial={false}
+        animate={{ y: on ? -1 : 0 }}
+        transition={reduced ? INSTANT : CELL}
+        className="relative flex"
+      >
         <CaretUpIcon weight="bold" className={lg ? "size-[15px]" : "size-3.5"} />
         {sparks}
       </motion.span>

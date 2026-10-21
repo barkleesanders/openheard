@@ -1,5 +1,5 @@
-import { apiKey, createDb, workspace } from "@openheard/db";
 import type { Db } from "@openheard/db";
+import { apiKey, createDb, workspace } from "@openheard/db";
 import { and, eq, isNull } from "drizzle-orm";
 
 export type ApiContext = {

@@ -1,18 +1,22 @@
-import { STATUS_KINDS } from "@openheard/db/schema/feedback";
 import type { StatusKind } from "@openheard/db/schema/feedback";
+import { STATUS_KINDS } from "@openheard/db/schema/feedback";
 import { Button } from "@openheard/ui/components/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@openheard/ui/components/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@openheard/ui/components/dropdown-menu";
+import { cn } from "@openheard/ui/lib/utils";
 import { CaretDownIcon, CaretUpIcon, CheckIcon, DotsThreeIcon, PlusIcon } from "@phosphor-icons/react";
 import { createFileRoute, useLoaderData, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-
 import { SectionHead, Toggle } from "@/components/admin/panel";
 import { deleteStatus, reorderStatuses, saveStatus } from "@/functions/statuses";
-import { KIND_LABEL } from "@/lib/status";
 import type { StatusInfo } from "@/lib/status";
+import { KIND_LABEL } from "@/lib/status";
 import { PageHead } from "@/routes/dashboard/settings";
-import { cn } from "@openheard/ui/lib/utils";
 
 export const Route = createFileRoute("/dashboard/settings/statuses")({
   head: () => ({ meta: [{ title: "Statuses · settings" }] }),
@@ -47,7 +51,10 @@ function Statuses() {
 
   return (
     <>
-      <PageHead title="Statuses" sub="Where a post can be. The order here is the order on the roadmap and the timeline." />
+      <PageHead
+        title="Statuses"
+        sub="Where a post can be. The order here is the order on the roadmap and the timeline."
+      />
       <SectionHead
         title="Statuses"
         right={
@@ -65,7 +72,9 @@ function Statuses() {
           last={i === root.statuses.length - 1}
           onMove={(d) => move(s.key, d)}
           onSave={(patch) => fire(() => saveStatus({ data: { key: s.key, ...patch } }), "Saved")}
-          onDelete={() => confirm(`Delete "${s.label}"?`) && fire(() => deleteStatus({ data: { key: s.key } }), "Status deleted")}
+          onDelete={() =>
+            confirm(`Delete "${s.label}"?`) && fire(() => deleteStatus({ data: { key: s.key } }), "Status deleted")
+          }
         />
       ))}
       {adding ? (
@@ -73,11 +82,17 @@ function Statuses() {
           status={{ key: "", label: "", color: "#6e8bff", kind: "planned", position: 99, onRoadmap: true }}
           count={0}
           editing
-          onSave={(patch) => { fire(() => saveStatus({ data: patch }), "Status added"); setAdding(false); }}
+          onSave={(patch) => {
+            fire(() => saveStatus({ data: patch }), "Status added");
+            setAdding(false);
+          }}
           onCancel={() => setAdding(false)}
         />
       ) : null}
-      <p className="pt-4 text-xs text-faint">Each status has a kind that tells openheard what it means. New posts land in the first "open" kind, merges go to "closed", shipping from the changelog uses "done".</p>
+      <p className="pt-4 text-xs text-faint">
+        Each status has a kind that tells openheard what it means. New posts land in the first "open" kind, merges go to
+        "closed", shipping from the changelog uses "done".
+      </p>
     </>
   );
 }
@@ -122,15 +137,35 @@ function StatusRow({
         }}
       >
         <div className="flex items-center gap-2">
-          <input autoFocus value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label" className="h-8 w-48 rounded-lg border border-input bg-card px-2.5 text-[13px] outline-none placeholder:text-faint focus:border-ring/60" />
+          <input
+            autoFocus
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Label"
+            className="h-8 w-48 rounded-lg border border-input bg-card px-2.5 text-[13px] outline-none placeholder:text-faint focus:border-ring/60"
+          />
           <span className="flex gap-1.5">
             {SWATCHES.map((c) => (
-              <button key={c} type="button" onClick={() => setColor(c)} aria-label={c} className={cn("inline-flex size-[22px] items-center justify-center rounded-full", color === c && "ring-2 ring-foreground ring-offset-2 ring-offset-background")} style={{ background: c }}>
+              <button
+                key={c}
+                type="button"
+                onClick={() => setColor(c)}
+                aria-label={c}
+                className={cn(
+                  "inline-flex size-[22px] items-center justify-center rounded-full",
+                  color === c && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
+                )}
+                style={{ background: c }}
+              >
                 {color === c ? <CheckIcon weight="bold" className="size-2.5 text-[#0d0d0f]" /> : null}
               </button>
             ))}
           </span>
-          <input value={color} onChange={(e) => setColor(e.target.value)} className="h-8 w-24 rounded-lg border border-input bg-card px-2.5 font-mono text-[12px] outline-none focus:border-ring/60" />
+          <input
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            className="h-8 w-24 rounded-lg border border-input bg-card px-2.5 font-mono text-[12px] outline-none focus:border-ring/60"
+          />
         </div>
         <div className="flex items-center gap-3">
           <DropdownMenu>
@@ -164,17 +199,29 @@ function StatusRow({
   return (
     <div className="flex items-center gap-3 border-t py-2.5">
       <span className="flex flex-col">
-        <button type="button" disabled={first} onClick={() => onMove?.(-1)} className="text-faint hover:text-foreground disabled:opacity-30">
+        <button
+          type="button"
+          disabled={first}
+          onClick={() => onMove?.(-1)}
+          className="text-faint hover:text-foreground disabled:opacity-30"
+        >
           <CaretUpIcon className="size-3" />
         </button>
-        <button type="button" disabled={last} onClick={() => onMove?.(1)} className="text-faint hover:text-foreground disabled:opacity-30">
+        <button
+          type="button"
+          disabled={last}
+          onClick={() => onMove?.(1)}
+          className="text-faint hover:text-foreground disabled:opacity-30"
+        >
           <CaretDownIcon className="size-3" />
         </button>
       </span>
       <span className="size-2.5 rounded-full" style={{ background: status.color }} />
       <span className="w-40 text-[13px] font-semibold">{status.label}</span>
       <span className="font-mono text-[11px] text-faint">{status.kind}</span>
-      {status.onRoadmap ? <span className="rounded-md bg-secondary px-1.5 py-0.5 text-[11px] text-faint">roadmap</span> : null}
+      {status.onRoadmap ? (
+        <span className="rounded-md bg-secondary px-1.5 py-0.5 text-[11px] text-faint">roadmap</span>
+      ) : null}
       <span className="flex-1" />
       <span className="text-xs text-faint tabular-nums">
         {count} {count === 1 ? "post" : "posts"}

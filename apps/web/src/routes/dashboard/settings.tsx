@@ -1,11 +1,10 @@
+import { cn } from "@openheard/ui/lib/utils";
 import { ArrowLeftIcon } from "@phosphor-icons/react";
-import { Link, Outlet, createFileRoute, redirect, useLoaderData, useLocation } from "@tanstack/react-router";
-
+import { createFileRoute, Link, Outlet, redirect, useLoaderData, useLocation } from "@tanstack/react-router";
 import { Panel } from "@/components/admin/panel";
 import { DashboardErrorState, DashboardPanelSkeleton } from "@/components/states";
 import { SETTINGS_NAV } from "@/lib/admin-nav";
 import { DEMO_HIDDEN_SETTINGS, isDemo } from "@/lib/demo";
-import { cn } from "@openheard/ui/lib/utils";
 
 export const Route = createFileRoute("/dashboard/settings")({
   // Locked demo pages never mount, so their loaders never call a server
@@ -18,7 +17,9 @@ export const Route = createFileRoute("/dashboard/settings")({
     }
   },
   component: SettingsLayout,
-  errorComponent: ({ error }) => <DashboardErrorState message={(error as Error)?.message} retry="/dashboard/settings/general" />,
+  errorComponent: ({ error }) => (
+    <DashboardErrorState message={(error as Error)?.message} retry="/dashboard/settings/general" />
+  ),
   pendingComponent: DashboardPanelSkeleton,
 });
 
@@ -28,22 +29,40 @@ function SettingsLayout() {
   // The demo hands admin to anyone, so the settings that spend money, show
   // member emails or outlive the nightly reset are not there at all.
   const locked = isDemo(root.workspace) ? (DEMO_HIDDEN_SETTINGS as readonly string[]) : [];
-  const groups = SETTINGS_NAV.map((g) => ({ group: g.group, items: g.items.filter(([slug]) => !locked.includes(slug)) })).filter((g) => g.items.length > 0);
+  const groups = SETTINGS_NAV.map((g) => ({
+    group: g.group,
+    items: g.items.filter(([slug]) => !locked.includes(slug)),
+  })).filter((g) => g.items.length > 0);
   const onLocked = locked.some((slug) => pathname === `/dashboard/settings/${slug}`);
   return (
     <Panel title="Settings" className="flex flex-col md:flex-row">
       <nav className="flex shrink-0 flex-row gap-1 overflow-x-auto border-b px-3 py-2 md:w-[220px] md:flex-col md:overflow-x-visible md:border-r md:border-b-0 md:pt-3 md:pb-4">
-        <Link to="/dashboard" className="hidden h-[30px] items-center gap-2 rounded-md px-2 text-sm font-semibold hover:bg-accent/60 md:flex">
+        <Link
+          to="/dashboard"
+          className="hidden h-[30px] items-center gap-2 rounded-md px-2 text-sm font-semibold hover:bg-accent/60 md:flex"
+        >
           <ArrowLeftIcon className="size-[13px] text-faint" /> Settings
         </Link>
         {groups.map((g) => (
           <div key={g.group} className="flex flex-row gap-0.5 md:flex-col md:pt-3.5">
-            <div className="hidden px-2 pb-1.5 font-mono text-[11px] tracking-[0.06em] text-faint uppercase md:block">{g.group}</div>
+            <div className="hidden px-2 pb-1.5 font-mono text-[11px] tracking-[0.06em] text-faint uppercase md:block">
+              {g.group}
+            </div>
             {g.items.map(([slug, label]) => {
               const to = `/dashboard/settings/${slug}`;
               const on = pathname === to;
               return (
-                <Link key={slug} to={to} preload="viewport" className={cn("flex h-7 items-center whitespace-nowrap rounded-md px-2 text-[13px]", on ? "bg-secondary font-semibold text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground")}>
+                <Link
+                  key={slug}
+                  to={to}
+                  preload="viewport"
+                  className={cn(
+                    "flex h-7 items-center whitespace-nowrap rounded-md px-2 text-[13px]",
+                    on
+                      ? "bg-secondary font-semibold text-foreground"
+                      : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+                  )}
+                >
                   {label}
                 </Link>
               );

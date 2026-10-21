@@ -1,22 +1,21 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { motion, type MotionStyle, type Transition } from "motion/react"
-
-import { cn } from "@openheard/ui/lib/utils"
+import { cn } from "@openheard/ui/lib/utils";
+import { type MotionStyle, motion, type Transition } from "motion/react";
+import { useEffect, useState } from "react";
 
 interface BorderBeamProps {
-  size?: number
-  duration?: number
-  delay?: number
-  colorFrom?: string
-  colorTo?: string
-  transition?: Transition
-  className?: string
-  style?: React.CSSProperties
-  reverse?: boolean
-  initialOffset?: number
-  borderWidth?: number
+  size?: number;
+  duration?: number;
+  delay?: number;
+  colorFrom?: string;
+  colorTo?: string;
+  transition?: Transition;
+  className?: string;
+  style?: React.CSSProperties;
+  reverse?: boolean;
+  initialOffset?: number;
+  borderWidth?: number;
 }
 
 export const BorderBeam = ({
@@ -32,15 +31,15 @@ export const BorderBeam = ({
   initialOffset = 0,
   borderWidth = 1,
 }: BorderBeamProps) => {
-  const [prefersReduced, setPrefersReduced] = useState(false)
+  const [prefersReduced, setPrefersReduced] = useState(false);
 
   useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)")
-    setPrefersReduced(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setPrefersReduced(e.matches)
-    mq.addEventListener("change", handler)
-    return () => mq.removeEventListener("change", handler)
-  }, [])
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReduced(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setPrefersReduced(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   if (prefersReduced) {
     return (
@@ -56,7 +55,7 @@ export const BorderBeam = ({
           className={cn(
             "absolute aspect-square",
             "bg-linear-to-l from-(--color-from) via-(--color-to) to-transparent",
-            className
+            className,
           )}
           style={
             {
@@ -70,7 +69,7 @@ export const BorderBeam = ({
           }
         />
       </div>
-    )
+    );
   }
 
   return (
@@ -86,7 +85,7 @@ export const BorderBeam = ({
         className={cn(
           "absolute aspect-square",
           "bg-linear-to-l from-(--color-from) via-(--color-to) to-transparent",
-          className
+          className,
         )}
         style={
           {
@@ -112,5 +111,5 @@ export const BorderBeam = ({
         }}
       />
     </div>
-  )
-}
+  );
+};

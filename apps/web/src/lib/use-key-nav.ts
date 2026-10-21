@@ -3,7 +3,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // j/k move, enter opens, v votes, / searches, c creates. Ignored while typing.
 // The focused index lives in a ref as well as state so that rapid key presses
 // never read a stale closure.
-export function useKeyNav(count: number, handlers: { open: (i: number) => void; vote: (i: number) => void; search: () => void; create: () => void }) {
+export function useKeyNav(
+  count: number,
+  handlers: { open: (i: number) => void; vote: (i: number) => void; search: () => void; create: () => void },
+) {
   const [focused, setFocusedState] = useState(-1);
   const focusedRef = useRef(-1);
   const h = useRef(handlers);

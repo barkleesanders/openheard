@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 const CELL = { type: "spring", stiffness: 520, damping: 34, mass: 0.45 } as const;
 
@@ -34,10 +34,7 @@ export type ValueFlashState<T> = {
   flashing: boolean;
 };
 
-export function useValueFlash<T>(
-  value: T,
-  { hold = 900, compare }: UseValueFlashOptions<T> = {},
-): ValueFlashState<T> {
+export function useValueFlash<T>(value: T, { hold = 900, compare }: UseValueFlashOptions<T> = {}): ValueFlashState<T> {
   const [state, setState] = useState<ValueFlashState<T>>({
     direction: null,
     from: value,
@@ -100,14 +97,7 @@ export type ValueFlashProps = {
   className?: string;
 };
 
-export function ValueFlash({
-  value,
-  format,
-  label,
-  hold = 900,
-  announceAfter = 700,
-  className = "",
-}: ValueFlashProps) {
+export function ValueFlash({ value, format, label, hold = 900, announceAfter = 700, className = "" }: ValueFlashProps) {
   const { direction, flashing, changeId } = useValueFlash(value, { hold });
   const reduced = useReducedMotion();
 
@@ -119,16 +109,9 @@ export function ValueFlash({
     return () => clearTimeout(id);
   }, [text, announceAfter]);
 
-  const tone = flashing
-    ? direction === "up"
-      ? "text-link"
-      : "text-muted-foreground"
-    : "text-foreground";
+  const tone = flashing ? (direction === "up" ? "text-link" : "text-muted-foreground") : "text-foreground";
 
-  const tint =
-    direction === "up"
-      ? "bg-link/12"
-      : "bg-muted-foreground/12";
+  const tint = direction === "up" ? "bg-link/12" : "bg-muted-foreground/12";
 
   return (
     <motion.span
@@ -195,11 +178,7 @@ export function ValueFlash({
                     }
               }
               animate={{ opacity: 1, scale: 1, y: "0em" }}
-              exit={
-                reduced
-                  ? { opacity: 0, transition: STILL }
-                  : { opacity: 0, scale: 0.8, transition: CLEAR }
-              }
+              exit={reduced ? { opacity: 0, transition: STILL } : { opacity: 0, scale: 0.8, transition: CLEAR }}
               transition={reduced ? STILL : POP}
               className="col-start-1 row-start-1 block h-[0.68em] w-[0.68em]"
             >

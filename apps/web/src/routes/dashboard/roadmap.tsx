@@ -1,3 +1,26 @@
+import {
+  type CollisionDetection,
+  closestCorners,
+  DndContext,
+  type DragEndEvent,
+  type DragOverEvent,
+  DragOverlay,
+  type DragStartEvent,
+  PointerSensor,
+  pointerWithin,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@openheard/ui/components/dropdown-menu";
+import { cn } from "@openheard/ui/lib/utils";
 import type { Icon } from "@phosphor-icons/react";
 import {
   CaretDownIcon,
@@ -18,37 +41,12 @@ import {
 import { createFileRoute, useLoaderData, useNavigate, useRouter } from "@tanstack/react-router";
 import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
-
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  pointerWithin,
-  closestCorners,
-  useSensor,
-  useSensors,
-  type CollisionDetection,
-  type DragEndEvent,
-  type DragOverEvent,
-  type DragStartEvent,
-} from "@dnd-kit/core";
-import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-
 import { Panel } from "@/components/admin/panel";
 import { DashboardErrorState, DashboardPanelSkeleton } from "@/components/states";
 import { listRoadmapAdmin } from "@/functions/admin";
 import { setStatus } from "@/functions/posts";
-import { KIND_ICON, roadmapStatuses, useStatuses } from "@/lib/status";
 import type { StatusInfo } from "@/lib/status";
-import { cn } from "@openheard/ui/lib/utils";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@openheard/ui/components/dropdown-menu";
+import { KIND_ICON, roadmapStatuses, useStatuses } from "@/lib/status";
 
 type Search = { sort?: "top" | "new"; board?: string };
 
@@ -111,14 +109,9 @@ function Roadmap() {
     setPosts(serverPosts);
   }
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-  );
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-  const grouped = useCallback(
-    (col: StatusInfo) => posts.filter((p) => p.status === col.key),
-    [posts],
-  );
+  const grouped = useCallback((col: StatusInfo) => posts.filter((p) => p.status === col.key), [posts]);
 
   function onDragStart(e: DragStartEvent) {
     const id = e.active.id as number;
@@ -209,9 +202,7 @@ function Roadmap() {
     <Panel
       title="Roadmap"
       actions={
-        <span className="hidden text-[13px] text-faint lg:inline">
-          Drag cards between columns to change status
-        </span>
+        <span className="hidden text-[13px] text-faint lg:inline">Drag cards between columns to change status</span>
       }
     >
       <div ref={setLiveRegionContainer} className="sr-only" />
@@ -226,7 +217,10 @@ function Roadmap() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-36">
               {(["top", "new"] as const).map((s) => (
-                <DropdownMenuItem key={s} onClick={() => navigate({ search: (p) => ({ ...p, sort: s === "top" ? undefined : s }) })}>
+                <DropdownMenuItem
+                  key={s}
+                  onClick={() => navigate({ search: (p) => ({ ...p, sort: s === "top" ? undefined : s }) })}
+                >
                   {s === "top" ? "Most votes" : "Newest"}
                   {sort === s ? <CheckIcon weight="bold" className="ml-auto size-3" /> : null}
                 </DropdownMenuItem>
@@ -234,15 +228,25 @@ function Roadmap() {
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
-            <DropdownMenuTrigger className={cn("inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] outline-none hover:bg-accent hover:text-foreground", search.board ? "text-foreground" : "text-muted-foreground")}>
+            <DropdownMenuTrigger
+              className={cn(
+                "inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[13px] outline-none hover:bg-accent hover:text-foreground",
+                search.board ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
               <FunnelSimpleIcon className="size-3.5" />
               Filter
               <CaretDownIcon className="size-2.5 text-faint" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-48">
-              <DropdownMenuLabel className="text-[11px] tracking-[0.06em] text-faint uppercase">Board</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-[11px] tracking-[0.06em] text-faint uppercase">
+                Board
+              </DropdownMenuLabel>
               {root.boards.map((b) => (
-                <DropdownMenuItem key={b.id} onClick={() => navigate({ search: (p) => ({ ...p, board: p.board === b.id ? undefined : b.id }) })}>
+                <DropdownMenuItem
+                  key={b.id}
+                  onClick={() => navigate({ search: (p) => ({ ...p, board: p.board === b.id ? undefined : b.id }) })}
+                >
                   <span className="flex-1">{b.name}</span>
                   {search.board === b.id ? <CheckIcon weight="bold" className="size-3" /> : null}
                 </DropdownMenuItem>
@@ -253,16 +257,30 @@ function Roadmap() {
         </div>
 
         {/* Kanban columns */}
-        <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragStart={onDragStart} onDragOver={onDragOver} onDragEnd={onDragEnd} onDragCancel={onDragCancel} accessibility={liveRegionContainer ? { container: liveRegionContainer } : undefined}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={collisionDetection}
+          onDragStart={onDragStart}
+          onDragOver={onDragOver}
+          onDragEnd={onDragEnd}
+          onDragCancel={onDragCancel}
+          accessibility={liveRegionContainer ? { container: liveRegionContainer } : undefined}
+        >
           <div className="scrollbar-thin flex flex-1 gap-0 overflow-x-auto px-5 pb-5">
             {columns.map((col) => {
               const items = grouped(col);
-              return <Column key={col.key} status={col} items={items} navigate={navigate} motionOk={!reducedMotion.current} />;
+              return (
+                <Column
+                  key={col.key}
+                  status={col}
+                  items={items}
+                  navigate={navigate}
+                  motionOk={!reducedMotion.current}
+                />
+              );
             })}
           </div>
-          <DragOverlay dropAnimation={null}>
-            {draggingPost ? <Card post={draggingPost} overlay /> : null}
-          </DragOverlay>
+          <DragOverlay dropAnimation={null}>{draggingPost ? <Card post={draggingPost} overlay /> : null}</DragOverlay>
         </DndContext>
       </div>
     </Panel>
@@ -360,7 +378,13 @@ function SortableCard({ post, motionOk }: { post: PostItem; motionOk: boolean })
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab select-none active:cursor-grabbing">
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="cursor-grab select-none active:cursor-grabbing"
+    >
       <Card post={post} />
     </div>
   );

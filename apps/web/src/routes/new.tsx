@@ -31,7 +31,14 @@ function NewWorkspace() {
         showHeardAbout={!hasExistingWorkspace}
         onSubmit={async (v) => {
           try {
-            const { id } = await createWorkspace({ data: { name: v.name, slug: v.slug, website: v.website || undefined, heardAboutUs: v.heardAboutUs || undefined } });
+            const { id } = await createWorkspace({
+              data: {
+                name: v.name,
+                slug: v.slug,
+                website: v.website || undefined,
+                heardAboutUs: v.heardAboutUs || undefined,
+              },
+            });
             window.location.href = workspaceUrl(id, rootDomain, "/dashboard");
             await new Promise(() => {});
           } catch (err) {

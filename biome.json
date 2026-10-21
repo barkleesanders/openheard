@@ -1,0 +1,20 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": [
+      "apps/*/src/**",
+      "packages/*/src/**",
+      "scripts/**",
+      "*.json",
+      "apps/*/package.json",
+      "packages/*/package.json",
+      "!**/routeTree.gen.ts",
+      "!packages/db/src/migrations/meta/**"
+    ]
+  },
+  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
+  "javascript": { "formatter": { "quoteStyle": "double" } },
+  "css": { "parser": { "tailwindDirectives": true } },
+  "linter": { "rules": { "recommended": true } }
+}

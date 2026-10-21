@@ -84,11 +84,7 @@ export function SkeletonSwap({
             className="pointer-events-none absolute inset-0"
             initial={reduced ? { opacity: 1 } : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={
-              reduced
-                ? { opacity: 0 }
-                : { opacity: 0, filter: "blur(3px)" }
-            }
+            exit={reduced ? { opacity: 0 } : { opacity: 0, filter: "blur(3px)" }}
             transition={reduced ? { duration: 0 } : CROSSFADE}
           >
             {skeleton}

@@ -1,11 +1,12 @@
 // Branded email contract (email-design.json). The auth mail is captured at the
 // real send seam — the EMAIL binding `send()` that createAuth() calls — by
 // driving the production handler over HTTP, exactly like security.test.ts.
+
+import { readdirSync, readFileSync } from "node:fs";
 import { createClient } from "@libsql/client";
 import type { Db } from "@openheard/db";
 import * as schema from "@openheard/db/schema/index";
 import { drizzle } from "drizzle-orm/libsql";
-import { readFileSync, readdirSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { EMAIL_DESIGN_MARKER, EMAIL_TOKENS, editorialEmailHtml, escapeHtml, isSafeHref } from "./email-template";
 
@@ -14,7 +15,9 @@ const BASE = "http://localhost:3001";
 
 async function freshDb(): Promise<Db> {
   const client = createClient({ url: ":memory:" });
-  for (const file of readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).sort()) {
+  for (const file of readdirSync(MIGRATIONS)
+    .filter((f) => f.endsWith(".sql"))
+    .sort()) {
     await client.executeMultiple(readFileSync(MIGRATIONS + file, "utf8").replaceAll("--> statement-breakpoint", ""));
   }
   await client.execute("PRAGMA foreign_keys = ON");

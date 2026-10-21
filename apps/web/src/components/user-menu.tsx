@@ -61,7 +61,9 @@ export default function UserMenu() {
           ) : null}
           <DropdownMenuItem
             onClick={() =>
-              authClient.signOut({ fetchOptions: { onSuccess: () => router.invalidate().then(() => router.navigate({ to: "/" })) } })
+              authClient.signOut({
+                fetchOptions: { onSuccess: () => router.invalidate().then(() => router.navigate({ to: "/" })) },
+              })
             }
           >
             Sign out

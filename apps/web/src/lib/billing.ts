@@ -1,7 +1,13 @@
 import Stripe from "stripe";
 
 // Server-only. Every export loads the env lazily so nothing here reaches the client bundle.
-type BillingEnv = { STRIPE_SECRET_KEY?: string; STRIPE_WEBHOOK_SECRET?: string; STRIPE_PRICE_MONTHLY?: string; STRIPE_PRICE_YEARLY?: string; BETTER_AUTH_URL?: string };
+type BillingEnv = {
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
+  STRIPE_PRICE_MONTHLY?: string;
+  STRIPE_PRICE_YEARLY?: string;
+  BETTER_AUTH_URL?: string;
+};
 
 export async function billingEnv(): Promise<BillingEnv> {
   const { env } = await import("@openheard/env/server");

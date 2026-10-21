@@ -1,15 +1,20 @@
+import geistLatinFont from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
 import { Toaster } from "@openheard/ui/components/sonner";
-import { HeadContent, Outlet, Scripts, ScrollRestoration, createRootRouteWithContext, useRouterState } from "@tanstack/react-router";
-
+import {
+  createRootRouteWithContext,
+  HeadContent,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useRouterState,
+} from "@tanstack/react-router";
 import Footer from "../components/footer";
 import Header from "../components/header";
 import { SignInDialog } from "../components/sign-in-dialog";
-
 import { getWorkspace } from "../functions/workspace";
 import appCss from "../index.css?url";
-import geistLatinFont from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
 
-export interface RouterAppContext {}
+export type RouterAppContext = {};
 
 const VITE_ENV = (import.meta as { env?: Record<string, string | undefined> }).env ?? {};
 const OPENPANEL_CLIENT_ID = VITE_ENV.VITE_OPENPANEL_CLIENT_ID;
@@ -40,23 +45,23 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
         { name: "twitter:image", content: "https://openheard.com/og.jpg" },
       ],
       links: [
-      { rel: "preload", href: geistLatinFont, as: "font", type: "font/woff2", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: appCss },
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-      // Safari, bookmarks and crawlers request /favicon.ico regardless of the SVG link
-      // (rasterized from favicon.svg by ~/tools/favicon-pack; live 404 on 2026-09-20).
-      { rel: "icon", href: "/favicon.ico", sizes: "16x16 32x32 48x48" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
-    ],
-    // Analytics only when a client id is set at build time, so self-hosters send nothing by default.
-    scripts: OPENPANEL_CLIENT_ID
-      ? [
-          { src: `${OPENPANEL_URL}/op1.js`, defer: true, async: true },
-          {
-            children: `window.op=window.op||function(){(window.op.q=window.op.q||[]).push(arguments)};window.op('init',${JSON.stringify({ clientId: OPENPANEL_CLIENT_ID, apiUrl: `${OPENPANEL_URL}/api`, trackScreenViews: true, trackOutgoingLinks: true, trackAttributes: true })});`,
-          },
-        ]
-      : [],
+        { rel: "preload", href: geistLatinFont, as: "font", type: "font/woff2", crossOrigin: "anonymous" },
+        { rel: "stylesheet", href: appCss },
+        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+        // Safari, bookmarks and crawlers request /favicon.ico regardless of the SVG link
+        // (rasterized from favicon.svg by ~/tools/favicon-pack; live 404 on 2026-09-20).
+        { rel: "icon", href: "/favicon.ico", sizes: "16x16 32x32 48x48" },
+        { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      ],
+      // Analytics only when a client id is set at build time, so self-hosters send nothing by default.
+      scripts: OPENPANEL_CLIENT_ID
+        ? [
+            { src: `${OPENPANEL_URL}/op1.js`, defer: true, async: true },
+            {
+              children: `window.op=window.op||function(){(window.op.q=window.op.q||[]).push(arguments)};window.op('init',${JSON.stringify({ clientId: OPENPANEL_CLIENT_ID, apiUrl: `${OPENPANEL_URL}/api`, trackScreenViews: true, trackOutgoingLinks: true, trackAttributes: true })});`,
+            },
+          ]
+        : [],
     };
   },
   component: RootDocument,
@@ -80,7 +85,10 @@ function RootDocument() {
   const bare = BARE_PAGES.some((p) => pathname === p || pathname.startsWith(p));
   const theme = data?.workspace.theme === "light" && !admin && !marketing ? "" : "dark";
   // Workspace accent applies to the public board only; the dashboard keeps ours.
-  const accent = !admin && data?.workspace.accent ? ({ "--link": data.workspace.accent, "--ring": data.workspace.accent } as React.CSSProperties) : undefined;
+  const accent =
+    !admin && data?.workspace.accent
+      ? ({ "--link": data.workspace.accent, "--ring": data.workspace.accent } as React.CSSProperties)
+      : undefined;
   return (
     <html lang="en" className={theme} style={accent}>
       <head>

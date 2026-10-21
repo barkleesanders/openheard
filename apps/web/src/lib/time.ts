@@ -12,7 +12,15 @@ const units: [number, Intl.RelativeTimeFormatUnit][] = [
 export function ago(date: Date | number | string): string {
   let diff = (Date.now() - new Date(date).getTime()) / 1000;
   if (diff < 45) return "now";
-  const short: Record<string, string> = { second: "s", minute: "m", hour: "h", day: "d", week: "w", month: "mo", year: "y" };
+  const short: Record<string, string> = {
+    second: "s",
+    minute: "m",
+    hour: "h",
+    day: "d",
+    week: "w",
+    month: "mo",
+    year: "y",
+  };
   for (const [size, unit] of units) {
     if (diff < size) return `${Math.max(1, Math.round(diff))}${short[unit]}`;
     diff /= size;

@@ -5,7 +5,7 @@ import { Input } from "@openheard/ui/components/input";
 import { Textarea } from "@openheard/ui/components/textarea";
 import { cn } from "@openheard/ui/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
-import * as React from "react";
+import type * as React from "react";
 
 function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
@@ -35,8 +35,7 @@ const inputGroupAddonVariants = cva(
         "inline-end": "order-last pr-2 has-[>button]:mr-[-0.3rem] has-[>kbd]:mr-[-0.15rem]",
         "block-start":
           "order-first w-full justify-start px-2.5 pt-2 group-has-[>input]/input-group:pt-2 [.border-b]:pb-2",
-        "block-end":
-          "order-last w-full justify-start px-2.5 pb-2 group-has-[>input]/input-group:pb-2 [.border-t]:pt-2",
+        "block-end": "order-last w-full justify-start px-2.5 pb-2 group-has-[>input]/input-group:pb-2 [.border-t]:pt-2",
       },
     },
     defaultVariants: {
@@ -142,11 +141,4 @@ function InputGroupTextarea({ className, ...props }: React.ComponentProps<"texta
   );
 }
 
-export {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupText,
-  InputGroupInput,
-  InputGroupTextarea,
-};
+export { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput, InputGroupText, InputGroupTextarea };

@@ -1,14 +1,13 @@
+import { createDb, post, status } from "@openheard/db";
 import { STATUS_KINDS } from "@openheard/db/schema/feedback";
-import { purgeWorkspaceCache } from "@/lib/cache";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-
+import { purgeWorkspaceCache } from "@/lib/cache";
 import { invalidate } from "@/lib/kv-cache";
 import { requireAdmin, sessionMiddleware } from "@/lib/session";
 import { listStatuses } from "@/lib/status-db";
-import { createDb, post, status } from "@openheard/db";
-import { and, eq, sql } from "drizzle-orm";
 
 const slug = (s: string) =>
   s
@@ -35,7 +34,10 @@ export const saveStatus = createServerFn({ method: "POST" })
     const db = createDb();
     const ws = context.workspace.id;
     if (data.key) {
-      await db.update(status).set({ label: data.label, color: data.color, kind: data.kind, onRoadmap: data.onRoadmap }).where(and(eq(status.workspaceId, ws), eq(status.key, data.key)));
+      await db
+        .update(status)
+        .set({ label: data.label, color: data.color, kind: data.kind, onRoadmap: data.onRoadmap })
+        .where(and(eq(status.workspaceId, ws), eq(status.key, data.key)));
       void invalidate(`workspace:${ws}`);
       purgeWorkspaceCache(new URL(getRequest().url).origin);
       return { key: data.key };
@@ -43,7 +45,17 @@ export const saveStatus = createServerFn({ method: "POST" })
     const existing = await listStatuses(db, ws);
     let key = slug(data.label) || "status";
     if (existing.some((s) => s.key === key)) key = `${key}-${existing.length + 1}`;
-    await db.insert(status).values({ workspaceId: ws, key, label: data.label, color: data.color, kind: data.kind, onRoadmap: data.onRoadmap, position: existing.length });
+    await db
+      .insert(status)
+      .values({
+        workspaceId: ws,
+        key,
+        label: data.label,
+        color: data.color,
+        kind: data.kind,
+        onRoadmap: data.onRoadmap,
+        position: existing.length,
+      });
     void invalidate(`workspace:${ws}`);
     purgeWorkspaceCache(new URL(getRequest().url).origin);
     return { key };
@@ -56,12 +68,16 @@ export const deleteStatus = createServerFn({ method: "POST" })
     requireAdmin(context.user);
     const db = createDb();
     const ws = context.workspace.id;
-    const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(post).where(and(eq(post.workspaceId, ws), eq(post.status, data.key)));
+    const [{ n }] = await db
+      .select({ n: sql<number>`count(*)` })
+      .from(post)
+      .where(and(eq(post.workspaceId, ws), eq(post.status, data.key)));
     if (n > 0) throw new Error(`${n} ${n === 1 ? "post uses" : "posts use"} this status. Move them first.`);
     const all = await listStatuses(db, ws);
     const target = all.find((s) => s.key === data.key);
     if (!target) throw new Error("Unknown status");
-    if ((target.kind === "open" || target.kind === "closed") && all.filter((s) => s.kind === target.kind).length === 1) throw new Error(`You need at least one "${target.kind}" status`);
+    if ((target.kind === "open" || target.kind === "closed") && all.filter((s) => s.kind === target.kind).length === 1)
+      throw new Error(`You need at least one "${target.kind}" status`);
     await db.delete(status).where(and(eq(status.workspaceId, ws), eq(status.key, data.key)));
     void invalidate(`workspace:${ws}`);
     purgeWorkspaceCache(new URL(getRequest().url).origin);
@@ -76,7 +92,10 @@ export const reorderStatuses = createServerFn({ method: "POST" })
     const db = createDb();
     const ws = context.workspace.id;
     for (const [i, key] of data.keys.entries()) {
-      await db.update(status).set({ position: i }).where(and(eq(status.workspaceId, ws), eq(status.key, key)));
+      await db
+        .update(status)
+        .set({ position: i })
+        .where(and(eq(status.workspaceId, ws), eq(status.key, key)));
     }
     void invalidate(`workspace:${ws}`);
     purgeWorkspaceCache(new URL(getRequest().url).origin);

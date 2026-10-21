@@ -29,7 +29,11 @@ async function fetchWorkspaceData(wsId: string): Promise<WorkspaceCache> {
       .orderBy(asc(board.position)),
     db.select().from(tag).where(eq(tag.workspaceId, wsId)).orderBy(asc(tag.name)),
     db.select().from(status).where(eq(status.workspaceId, wsId)).orderBy(asc(status.position)),
-    db.select({ status: post.status, count: count() }).from(post).where(eq(post.workspaceId, wsId)).groupBy(post.status),
+    db
+      .select({ status: post.status, count: count() })
+      .from(post)
+      .where(eq(post.workspaceId, wsId))
+      .groupBy(post.status),
   ] as const);
   const statusCounts = Object.fromEntries(statusRows.map((r) => [r.status, r.count])) as Record<string, number>;
   const total = statusRows.reduce((n, r) => n + r.count, 0);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { SETTINGS_NAV } from "./admin-nav";
-import { DEMO_HIDDEN_SETTINGS, DEMO_WORKSPACE_ID, assertNotDemo, isDemo } from "./demo";
+import { assertNotDemo, DEMO_HIDDEN_SETTINGS, DEMO_WORKSPACE_ID, isDemo } from "./demo";
 import { scopedId, seedUserId } from "./demo-seed";
 import { isMarketingHost, workspaceSlugFromHost } from "./session";
 

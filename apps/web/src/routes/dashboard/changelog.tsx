@@ -1,29 +1,46 @@
 import { Button } from "@openheard/ui/components/button";
-import { ArrowLeftIcon, ArrowSquareOutIcon, CheckCircleIcon, CircleDashedIcon, ImageIcon, PlusIcon, TrashIcon, XIcon } from "@phosphor-icons/react";
+import { cn } from "@openheard/ui/lib/utils";
+import {
+  ArrowLeftIcon,
+  ArrowSquareOutIcon,
+  CheckCircleIcon,
+  CircleDashedIcon,
+  ImageIcon,
+  PlusIcon,
+  TrashIcon,
+  XIcon,
+} from "@phosphor-icons/react";
 import { createFileRoute, useLoaderData, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-
 import { Panel } from "@/components/admin/panel";
 import { Avatar } from "@/components/bits";
 import { DashboardErrorState, DashboardPanelSkeleton } from "@/components/states";
 import { deleteChangelog, listChangelog, saveChangelog } from "@/functions/changelog";
 import { searchPosts } from "@/functions/posts";
 import { ago, fullDate } from "@/lib/time";
-import { cn } from "@openheard/ui/lib/utils";
 
 type Entry = Awaited<ReturnType<typeof listChangelog>>[number];
 type Search = { entry?: number | "new" };
 
 export const Route = createFileRoute("/dashboard/changelog")({
   validateSearch: (s: Record<string, unknown>): Search => ({
-    entry: s.entry === "new" ? "new" : typeof s.entry === "number" ? s.entry : typeof s.entry === "string" && /^\d+$/.test(s.entry) ? Number(s.entry) : undefined,
+    entry:
+      s.entry === "new"
+        ? "new"
+        : typeof s.entry === "number"
+          ? s.entry
+          : typeof s.entry === "string" && /^\d+$/.test(s.entry)
+            ? Number(s.entry)
+            : undefined,
   }),
   loaderDeps: () => ({}),
   loader: () => listChangelog(),
   head: () => ({ meta: [{ title: "Changelog · openheard" }] }),
   component: ChangelogPage,
-  errorComponent: ({ error }) => <DashboardErrorState message={(error as Error)?.message} retry="/dashboard/changelog" />,
+  errorComponent: ({ error }) => (
+    <DashboardErrorState message={(error as Error)?.message} retry="/dashboard/changelog" />
+  ),
   pendingComponent: DashboardPanelSkeleton,
 });
 
@@ -36,7 +53,13 @@ function ChangelogPage() {
   const open = search.entry === "new" ? "new" : entries.find((e) => e.id === search.entry);
 
   if (open) {
-    return <Editor key={open === "new" ? "new" : open.id} entry={open === "new" ? null : open} onClose={() => navigate({ search: {} })} />;
+    return (
+      <Editor
+        key={open === "new" ? "new" : open.id}
+        entry={open === "new" ? null : open}
+        onClose={() => navigate({ search: {} })}
+      />
+    );
   }
 
   return (
@@ -51,7 +74,10 @@ function ChangelogPage() {
       {entries.length === 0 ? (
         <div className="flex flex-col items-center gap-3 px-6 py-24 text-center">
           <p className="text-[15px] font-semibold">Nothing shipped yet</p>
-          <p className="max-w-sm text-sm text-muted-foreground">Write the first entry when you release something. Linked posts move to Shipped and their voters hear about it.</p>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Write the first entry when you release something. Linked posts move to Shipped and their voters hear about
+            it.
+          </p>
           <Button size="sm" arrow className="mt-2" onClick={() => navigate({ search: { entry: "new" } })}>
             New entry
           </Button>
@@ -65,10 +91,22 @@ function ChangelogPage() {
               onClick={() => navigate({ search: { entry: e.id } })}
               className="flex h-13 shrink-0 items-center gap-3.5 border-b px-5 text-left hover:bg-card/60"
             >
-              {e.publishedAt ? <CheckCircleIcon weight="fill" className="size-5 shrink-0 text-status-shipped" /> : <CircleDashedIcon className="size-5 shrink-0 text-status-planned" />}
+              {e.publishedAt ? (
+                <CheckCircleIcon weight="fill" className="size-5 shrink-0 text-status-shipped" />
+              ) : (
+                <CircleDashedIcon className="size-5 shrink-0 text-status-planned" />
+              )}
               <span className="min-w-0 truncate text-[16px] font-medium">{e.title}</span>
-              {e.version ? <span className="shrink-0 rounded-md bg-secondary px-2 py-0.5 font-mono text-[12px] text-muted-foreground">{e.version}</span> : null}
-              {!e.publishedAt ? <span className="shrink-0 rounded-md bg-status-planned/15 px-2 py-0.5 text-[12px] font-medium text-status-planned">Draft</span> : null}
+              {e.version ? (
+                <span className="shrink-0 rounded-md bg-secondary px-2 py-0.5 font-mono text-[12px] text-muted-foreground">
+                  {e.version}
+                </span>
+              ) : null}
+              {!e.publishedAt ? (
+                <span className="shrink-0 rounded-md bg-status-planned/15 px-2 py-0.5 text-[12px] font-medium text-status-planned">
+                  Draft
+                </span>
+              ) : null}
               {e.posts.length ? (
                 <span className="shrink-0 text-[12px] text-faint">
                   {e.posts.length} {e.posts.length === 1 ? "post" : "posts"}
@@ -99,11 +137,18 @@ function Editor({ entry, onClose }: { entry: Entry | null; onClose: () => void }
   const [busy, setBusy] = useState(false);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const published = !!entry?.publishedAt;
-  const dirty = title !== (entry?.title ?? "") || version !== (entry?.version ?? "") || body !== (entry?.body ?? "") || posts.map((p) => p.id).join() !== (entry?.posts ?? []).map((p) => p.id).join();
+  const dirty =
+    title !== (entry?.title ?? "") ||
+    version !== (entry?.version ?? "") ||
+    body !== (entry?.body ?? "") ||
+    posts.map((p) => p.id).join() !== (entry?.posts ?? []).map((p) => p.id).join();
 
   useEffect(() => {
     if (!q.trim()) return setResults([]);
-    const t = setTimeout(() => searchPosts({ data: { q } }).then((r) => setResults(r.filter((x) => !posts.some((p) => p.id === x.id)))), 150);
+    const t = setTimeout(
+      () => searchPosts({ data: { q } }).then((r) => setResults(r.filter((x) => !posts.some((p) => p.id === x.id)))),
+      150,
+    );
     return () => clearTimeout(t);
   }, [q, posts]);
 
@@ -111,9 +156,19 @@ function Editor({ entry, onClose }: { entry: Entry | null; onClose: () => void }
     if (title.trim().length < 3) return toast("Give it a title first");
     setBusy(true);
     try {
-      const { id } = await saveChangelog({ data: { id: entry?.id, title, version, body, postIds: posts.map((p) => p.id), publish } });
+      const { id } = await saveChangelog({
+        data: { id: entry?.id, title, version, body, postIds: posts.map((p) => p.id), publish },
+      });
       await router.invalidate();
-      toast.success(publish ? (published ? "Saved" : "Published. Linked posts are now Shipped.") : published ? "Unpublished" : "Draft saved");
+      toast.success(
+        publish
+          ? published
+            ? "Saved"
+            : "Published. Linked posts are now Shipped."
+          : published
+            ? "Unpublished"
+            : "Draft saved",
+      );
       if (!entry && id) router.navigate({ to: "/dashboard/changelog", search: { entry: id } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save");
@@ -134,11 +189,21 @@ function Editor({ entry, onClose }: { entry: Entry | null; onClose: () => void }
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-background animate-in fade-in-0 duration-150 motion-reduce:animate-none">
         <div className="flex h-[52px] shrink-0 items-center justify-between border-b pr-3 pl-3">
           <div className="flex items-center gap-2">
-            <button type="button" onClick={onClose} className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" title="Back">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+              title="Back"
+            >
               <ArrowLeftIcon className="size-4" />
             </button>
             <span className="text-[15px] font-semibold">{entry ? entry.title : "New entry"}</span>
-            <span className={cn("ml-1 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-medium", published ? "bg-status-shipped/15 text-status-shipped" : "bg-status-planned/15 text-status-planned")}>
+            <span
+              className={cn(
+                "ml-1 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-medium",
+                published ? "bg-status-shipped/15 text-status-shipped" : "bg-status-planned/15 text-status-planned",
+              )}
+            >
               {published ? `Published ${ago(entry!.publishedAt!)} ago` : "Draft"}
             </span>
           </div>
@@ -149,7 +214,12 @@ function Editor({ entry, onClose }: { entry: Entry | null; onClose: () => void }
               </Button>
             ) : null}
             {published ? (
-              <a href="/changelog" target="_blank" rel="noreferrer" className="inline-flex h-[30px] items-center gap-1.5 rounded-md px-2.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground">
+              <a
+                href="/changelog"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-[30px] items-center gap-1.5 rounded-md px-2.5 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
                 <ArrowSquareOutIcon className="size-3.5" /> View
               </a>
             ) : null}
@@ -178,7 +248,11 @@ function Editor({ entry, onClose }: { entry: Entry | null; onClose: () => void }
                 aria-label="Version"
                 className="h-7 w-24 rounded-md border border-transparent bg-transparent px-2 font-mono text-[12px] text-muted-foreground outline-none placeholder:text-faint hover:border-input focus:border-ring/60"
               />
-              <button type="button" onClick={() => toast("Covers land with image support")} className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[12px] text-faint hover:bg-accent hover:text-foreground">
+              <button
+                type="button"
+                onClick={() => toast("Covers land with image support")}
+                className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[12px] text-faint hover:bg-accent hover:text-foreground"
+              >
                 <ImageIcon className="size-3.5" /> Add cover
               </button>
             </div>
@@ -209,10 +283,18 @@ function Editor({ entry, onClose }: { entry: Entry | null; onClose: () => void }
               <div className="text-[11px] font-semibold tracking-[0.06em] text-faint uppercase">Ships these posts</div>
               <div className="flex flex-wrap items-center gap-1.5">
                 {posts.map((p) => (
-                  <span key={p.id} className="inline-flex h-7 items-center gap-1.5 rounded-full border border-input pr-1.5 pl-2.5 text-[13px] text-muted-foreground">
+                  <span
+                    key={p.id}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-full border border-input pr-1.5 pl-2.5 text-[13px] text-muted-foreground"
+                  >
                     <span className="size-1.5 rounded-full bg-status-shipped" />
                     {p.title}
-                    <button type="button" onClick={() => setPosts((ps) => ps.filter((x) => x.id !== p.id))} className="inline-flex size-5 items-center justify-center rounded-full text-faint hover:bg-accent hover:text-foreground" title="Remove">
+                    <button
+                      type="button"
+                      onClick={() => setPosts((ps) => ps.filter((x) => x.id !== p.id))}
+                      className="inline-flex size-5 items-center justify-center rounded-full text-faint hover:bg-accent hover:text-foreground"
+                      title="Remove"
+                    >
                       <XIcon className="size-2.5" />
                     </button>
                   </span>
@@ -250,12 +332,18 @@ function Editor({ entry, onClose }: { entry: Entry | null; onClose: () => void }
                     ) : null}
                   </div>
                 ) : (
-                  <button type="button" onClick={() => setLinking(true)} className="inline-flex h-7 items-center gap-1 rounded-full border border-dashed border-input px-2.5 text-[13px] text-faint hover:border-foreground/40 hover:text-foreground">
+                  <button
+                    type="button"
+                    onClick={() => setLinking(true)}
+                    className="inline-flex h-7 items-center gap-1 rounded-full border border-dashed border-input px-2.5 text-[13px] text-faint hover:border-foreground/40 hover:text-foreground"
+                  >
                     <PlusIcon className="size-3" /> Link a post
                   </button>
                 )}
               </div>
-              <p className="text-[12px] text-faint">Publishing moves linked posts to Shipped and, once email is on, tells their voters.</p>
+              <p className="text-[12px] text-faint">
+                Publishing moves linked posts to Shipped and, once email is on, tells their voters.
+              </p>
             </div>
           </div>
         </div>

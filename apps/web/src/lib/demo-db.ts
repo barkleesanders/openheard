@@ -47,7 +47,11 @@ export async function demoAdminPassword(): Promise<string> {
 // shared admin's membership is the marker, and ordinary membership APIs refuse
 // to hand that account out, so nothing else can forge it.
 async function assertOursIfItExists(db: Db) {
-  const [existing] = await db.select({ id: schema.workspace.id }).from(schema.workspace).where(eq(schema.workspace.id, DEMO_WORKSPACE_ID)).limit(1);
+  const [existing] = await db
+    .select({ id: schema.workspace.id })
+    .from(schema.workspace)
+    .where(eq(schema.workspace.id, DEMO_WORKSPACE_ID))
+    .limit(1);
   if (!existing) return false;
   const [marker] = await db
     .select({ userId: schema.membership.userId })
@@ -62,7 +66,10 @@ async function assertOursIfItExists(db: Db) {
 export async function ensureDemoWorkspace(db: Db) {
   const existed = await assertOursIfItExists(db);
   if (!existed) {
-    await db.insert(schema.workspace).values({ id: DEMO_WORKSPACE_ID, ...DEMO_WORKSPACE_DEFAULTS }).onConflictDoNothing();
+    await db
+      .insert(schema.workspace)
+      .values({ id: DEMO_WORKSPACE_ID, ...DEMO_WORKSPACE_DEFAULTS })
+      .onConflictDoNothing();
   }
   // Inlined rather than via lib/status-db, which pulls the Worker bindings in
   // and so cannot be imported by the standalone reset script.
@@ -79,7 +86,11 @@ export async function ensureDemoWorkspace(db: Db) {
   // public API rather than minting a session by hand. "local:credential" is
   // better-auth's issuer for its built-in email provider. Hashing is slow, so
   // it happens once at provisioning and never on the entry path.
-  const [credential] = await db.select({ id: schema.account.id }).from(schema.account).where(eq(schema.account.id, `${DEMO_ADMIN_ID}-credential`)).limit(1);
+  const [credential] = await db
+    .select({ id: schema.account.id })
+    .from(schema.account)
+    .where(eq(schema.account.id, `${DEMO_ADMIN_ID}-credential`))
+    .limit(1);
   if (!credential) {
     await db
       .insert(schema.account)
@@ -94,7 +105,10 @@ export async function ensureDemoWorkspace(db: Db) {
       .onConflictDoNothing();
   }
   // Admin of the demo only. Every other workspace still sees a guest.
-  await db.insert(schema.membership).values({ workspaceId: DEMO_WORKSPACE_ID, userId: DEMO_ADMIN_ID, role: "admin" }).onConflictDoNothing();
+  await db
+    .insert(schema.membership)
+    .values({ workspaceId: DEMO_WORKSPACE_ID, userId: DEMO_ADMIN_ID, role: "admin" })
+    .onConflictDoNothing();
 }
 
 // Everything a public visitor needs on a deployment that has never run the
@@ -114,7 +128,10 @@ export async function ensureDemoContent(db: Db) {
 // off the per-request path deliberately.
 export async function repairDemoCredential(db: Db) {
   const password = await hashPassword(await demoAdminPassword());
-  await db.update(schema.account).set({ password }).where(eq(schema.account.id, `${DEMO_ADMIN_ID}-credential`));
+  await db
+    .update(schema.account)
+    .set({ password })
+    .where(eq(schema.account.id, `${DEMO_ADMIN_ID}-credential`));
 }
 
 // Deleting a demo row cascades into whatever points at it, and the foreign keys
@@ -150,8 +167,14 @@ export async function resetDemoWorkspace(db: Db, workspaceId: string = DEMO_WORK
   await assertNoCrossWorkspaceRefs(db);
 
   const posts = db.select({ id: schema.post.id }).from(schema.post).where(eq(schema.post.workspaceId, ws));
-  const comments = db.select({ id: schema.comment.id }).from(schema.comment).where(inArray(schema.comment.postId, posts));
-  const entries = db.select({ id: schema.changelogEntry.id }).from(schema.changelogEntry).where(eq(schema.changelogEntry.workspaceId, ws));
+  const comments = db
+    .select({ id: schema.comment.id })
+    .from(schema.comment)
+    .where(inArray(schema.comment.postId, posts));
+  const entries = db
+    .select({ id: schema.changelogEntry.id })
+    .from(schema.changelogEntry)
+    .where(eq(schema.changelogEntry.workspaceId, ws));
 
   await db.delete(schema.changelogPost).where(inArray(schema.changelogPost.entryId, entries));
   await db.delete(schema.changelogEntry).where(eq(schema.changelogEntry.workspaceId, ws));
@@ -166,11 +189,16 @@ export async function resetDemoWorkspace(db: Db, workspaceId: string = DEMO_WORK
   await db.delete(schema.board).where(eq(schema.board.workspaceId, ws));
   await db.delete(schema.apiKey).where(eq(schema.apiKey.workspaceId, ws));
   await db.delete(schema.invite).where(eq(schema.invite.workspaceId, ws));
-  await db.delete(schema.membership).where(and(eq(schema.membership.workspaceId, ws), ne(schema.membership.userId, DEMO_ADMIN_ID)));
+  await db
+    .delete(schema.membership)
+    .where(and(eq(schema.membership.workspaceId, ws), ne(schema.membership.userId, DEMO_ADMIN_ID)));
   await db.delete(schema.status).where(eq(schema.status.workspaceId, ws));
   await db.update(schema.workspace).set(DEMO_WORKSPACE_DEFAULTS).where(eq(schema.workspace.id, ws));
   for (const [name, handle] of SEED_PEOPLE) {
-    await db.update(schema.user).set({ name }).where(eq(schema.user.id, seedUserId(ws, handle)));
+    await db
+      .update(schema.user)
+      .set({ name })
+      .where(eq(schema.user.id, seedUserId(ws, handle)));
   }
 
   await ensureDemoWorkspace(db);

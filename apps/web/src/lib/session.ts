@@ -84,10 +84,16 @@ export async function workspaceFromRequest(request: Request): Promise<Workspace 
   return ws ?? null;
 }
 
-const ctxCache = new WeakMap<Request, Promise<{ user: SessionUser | null; workspace: Workspace; marketing: boolean }>>();
+const ctxCache = new WeakMap<
+  Request,
+  Promise<{ user: SessionUser | null; workspace: Workspace; marketing: boolean }>
+>();
 
 async function resolveSession(request: Request) {
-  const [{ createDb, membership, workspace }, { createAuth }] = await Promise.all([import("@openheard/db"), import("@openheard/auth")]);
+  const [{ createDb, membership, workspace }, { createAuth }] = await Promise.all([
+    import("@openheard/db"),
+    import("@openheard/auth"),
+  ]);
   const db = createDb();
   const host = request.headers.get("host") ?? "";
   const root = await rootDomain();
@@ -121,7 +127,13 @@ async function resolveSession(request: Request) {
       .from(membership)
       .where(and(eq(membership.workspaceId, ws.id), eq(membership.userId, session.user.id)))
       .limit(1);
-    user = { id: session.user.id, name: session.user.name, email: session.user.email, role: m?.role ?? "guest", image: session.user.image };
+    user = {
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+      role: m?.role ?? "guest",
+      image: session.user.image,
+    };
   }
   return { user, workspace: ws, marketing };
 }

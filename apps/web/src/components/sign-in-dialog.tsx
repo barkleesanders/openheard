@@ -3,8 +3,8 @@ import { useLoaderData, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
 
 import { AuthForm } from "@/components/auth-form";
+import { addComment, toggleVote } from "@/functions/posts";
 import { closeSignIn, consumePendingAction, useSignInDialog } from "@/lib/pending-action";
-import { toggleVote, addComment } from "@/functions/posts";
 
 export function SignInDialog() {
   const root = useLoaderData({ from: "__root__" });
@@ -27,14 +27,14 @@ export function SignInDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o) closeSignIn(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) closeSignIn();
+      }}
+    >
       <DialogContent className="max-w-[380px]">
-        <AuthForm
-          wsName={wsName}
-          hasGoogle={hasGoogle}
-          callbackURL={callbackURL}
-          onSuccess={onSuccess}
-        />
+        <AuthForm wsName={wsName} hasGoogle={hasGoogle} callbackURL={callbackURL} onSuccess={onSuccess} />
       </DialogContent>
     </Dialog>
   );

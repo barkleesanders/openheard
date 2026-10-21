@@ -1,11 +1,10 @@
+import { cn } from "@openheard/ui/lib/utils";
 import { ListIcon, MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react";
 import { Link, useLoaderData, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-
 import { Kbd } from "./bits";
 import Logo from "./logo";
 import UserMenu from "./user-menu";
-import { cn } from "@openheard/ui/lib/utils";
 
 const links = [
   { to: "/", label: "board" },
@@ -25,7 +24,13 @@ export default function Header() {
     setMobileSearch(false);
   }, [pathname]);
 
-  const visibleLinks = links.filter(({ to }) => (to === "/roadmap" ? data?.workspace.showRoadmap !== false : to === "/changelog" ? data?.workspace.showChangelog !== false : true));
+  const visibleLinks = links.filter(({ to }) =>
+    to === "/roadmap"
+      ? data?.workspace.showRoadmap !== false
+      : to === "/changelog"
+        ? data?.workspace.showChangelog !== false
+        : true,
+  );
 
   return (
     <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur-[2px]">
@@ -35,7 +40,10 @@ export default function Header() {
         ) : (
           <>
             <div className="flex h-full items-center gap-3 md:gap-4">
-              <Link to="/" className="flex items-center gap-2.5 text-[14px] font-semibold tracking-[-0.01em] text-foreground">
+              <Link
+                to="/"
+                className="flex items-center gap-2.5 text-[14px] font-semibold tracking-[-0.01em] text-foreground"
+              >
                 <Logo />
                 <span className="hidden sm:inline">{data?.workspace.name ?? "openheard"}</span>
               </Link>
@@ -52,7 +60,12 @@ export default function Header() {
                         active ? "text-foreground" : "text-faint hover:text-muted-foreground",
                       )}
                     >
-                      <span className={cn("size-[5px] rounded-full transition-colors duration-200", active ? "bg-link" : "bg-transparent group-hover/nav:bg-input")} />
+                      <span
+                        className={cn(
+                          "size-[5px] rounded-full transition-colors duration-200",
+                          active ? "bg-link" : "bg-transparent group-hover/nav:bg-input",
+                        )}
+                      />
                       {label}
                     </Link>
                   );
@@ -137,7 +150,11 @@ function MobileSearchBar({ onClose }: { onClose: () => void }) {
         placeholder="Search posts"
         className="min-w-0 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-faint"
       />
-      <button type="button" onClick={onClose} className="inline-flex size-10 shrink-0 items-center justify-center rounded-md text-faint hover:bg-accent hover:text-foreground">
+      <button
+        type="button"
+        onClick={onClose}
+        className="inline-flex size-10 shrink-0 items-center justify-center rounded-md text-faint hover:bg-accent hover:text-foreground"
+      >
         <XIcon className="size-4" />
       </button>
     </form>

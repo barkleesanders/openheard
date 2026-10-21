@@ -3,7 +3,14 @@ import { useLoaderData } from "@tanstack/react-router";
 
 // A status as the client sees it. Colours are hex from the database, so
 // everything renders with inline styles rather than Tailwind classes.
-export type StatusInfo = { key: string; label: string; color: string; kind: StatusKind; position: number; onRoadmap: boolean };
+export type StatusInfo = {
+  key: string;
+  label: string;
+  color: string;
+  kind: StatusKind;
+  position: number;
+  onRoadmap: boolean;
+};
 
 export function useStatuses(): StatusInfo[] {
   const root = useLoaderData({ from: "__root__" });
@@ -11,13 +18,25 @@ export function useStatuses(): StatusInfo[] {
 }
 
 export function findStatus(list: StatusInfo[], key: string): StatusInfo {
-  return list.find((s) => s.key === key) ?? { key, label: key, color: "#7a7a85", kind: "open", position: 99, onRoadmap: false };
+  return (
+    list.find((s) => s.key === key) ?? {
+      key,
+      label: key,
+      color: "#7a7a85",
+      kind: "open",
+      position: 99,
+      onRoadmap: false,
+    }
+  );
 }
 
 export const roadmapStatuses = (list: StatusInfo[]) => list.filter((s) => s.onRoadmap);
 
 // Dashboard glyph per kind, used in the sidebar and the inbox.
-export const KIND_ICON: Record<StatusKind, "circle-dashed" | "circle" | "circle-half" | "spinner-gap" | "check-circle" | "x-circle"> = {
+export const KIND_ICON: Record<
+  StatusKind,
+  "circle-dashed" | "circle" | "circle-half" | "spinner-gap" | "check-circle" | "x-circle"
+> = {
   open: "circle-dashed",
   review: "circle",
   planned: "circle-half",

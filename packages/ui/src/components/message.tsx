@@ -1,21 +1,11 @@
 import { cn } from "@openheard/ui/lib/utils";
-import * as React from "react";
+import type * as React from "react";
 
 function MessageGroup({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="message-group"
-      className={cn("flex min-w-0 flex-col gap-1.5", className)}
-      {...props}
-    />
-  );
+  return <div data-slot="message-group" className={cn("flex min-w-0 flex-col gap-1.5", className)} {...props} />;
 }
 
-function Message({
-  className,
-  align = "start",
-  ...props
-}: React.ComponentProps<"div"> & { align?: "start" | "end" }) {
+function Message({ className, align = "start", ...props }: React.ComponentProps<"div"> & { align?: "start" | "end" }) {
   return (
     <div
       data-slot="message"
@@ -81,4 +71,4 @@ function MessageFooter({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-export { MessageGroup, Message, MessageAvatar, MessageContent, MessageFooter, MessageHeader };
+export { Message, MessageAvatar, MessageContent, MessageFooter, MessageGroup, MessageHeader };

@@ -2,8 +2,8 @@
 
 import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { cn } from "@openheard/ui/lib/utils";
-import { CaretRightIcon as ChevronRightIcon, CheckIcon } from "@phosphor-icons/react";
-import * as React from "react";
+import { CheckIcon, CaretRightIcon as ChevronRightIcon } from "@phosphor-icons/react";
+import type * as React from "react";
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
@@ -24,8 +24,7 @@ function DropdownMenuContent({
   sideOffset = 4,
   className,
   ...props
-}: MenuPrimitive.Popup.Props &
-  Pick<MenuPrimitive.Positioner.Props, "align" | "alignOffset" | "side" | "sideOffset">) {
+}: MenuPrimitive.Popup.Props & Pick<MenuPrimitive.Positioner.Props, "align" | "alignOffset" | "side" | "sideOffset">) {
   return (
     <MenuPrimitive.Portal>
       <MenuPrimitive.Positioner
@@ -237,18 +236,18 @@ function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"spa
 
 export {
   DropdownMenu,
-  DropdownMenuPortal,
-  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
-  DropdownMenuLabel,
   DropdownMenuItem,
-  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuSub,
-  DropdownMenuSubTrigger,
   DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
 };

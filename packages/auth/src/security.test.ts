@@ -2,11 +2,12 @@
 // betterauth.security.json). Every test drives the production `createAuth()`
 // handler from ./index.ts over real HTTP Requests against a fresh in-memory
 // schema — the same code path apps/web/src/routes/api/auth/$.ts forwards to.
+
+import { readdirSync, readFileSync } from "node:fs";
 import { createClient } from "@libsql/client";
 import type { Db } from "@openheard/db";
 import * as schema from "@openheard/db/schema/index";
 import { drizzle } from "drizzle-orm/libsql";
-import { readFileSync, readdirSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const MIGRATIONS = new URL("../../db/migrations/", import.meta.url).pathname;
@@ -14,7 +15,9 @@ const BASE = "http://localhost:3001";
 
 async function freshDb(): Promise<Db> {
   const client = createClient({ url: ":memory:" });
-  for (const file of readdirSync(MIGRATIONS).filter((f) => f.endsWith(".sql")).sort()) {
+  for (const file of readdirSync(MIGRATIONS)
+    .filter((f) => f.endsWith(".sql"))
+    .sort()) {
     await client.executeMultiple(readFileSync(MIGRATIONS + file, "utf8").replaceAll("--> statement-breakpoint", ""));
   }
   await client.execute("PRAGMA foreign_keys = ON");
@@ -71,7 +74,9 @@ function post(auth: Auth, path: string, body: unknown, headers: Record<string, s
   );
 }
 function get(auth: Auth, path: string, headers: Record<string, string> = {}) {
-  return auth.handler(new Request(`${BASE}/api/auth${path}`, { method: "GET", headers: { "x-forwarded-for": clientIp, ...headers } }));
+  return auth.handler(
+    new Request(`${BASE}/api/auth${path}`, { method: "GET", headers: { "x-forwarded-for": clientIp, ...headers } }),
+  );
 }
 function cookiesOf(res: Response): Record<string, string> {
   const out: Record<string, string> = {};
@@ -164,7 +169,9 @@ describe("sessions", () => {
 
   it("caches the session in a signed cookie for at most five minutes", async () => {
     const cookies = await signUp(createAuth());
-    const res = await get(createAuth(), "/get-session", { cookie: `better-auth.session_token=${cookies["better-auth.session_token"]}` });
+    const res = await get(createAuth(), "/get-session", {
+      cookie: `better-auth.session_token=${cookies["better-auth.session_token"]}`,
+    });
     const line = res.headers.getSetCookie().find((l) => l.startsWith("better-auth.session_data="));
     expect(line).toBeTruthy();
     const maxAge = Number(/Max-Age=(\d+)/i.exec(line!)?.[1]);
@@ -197,7 +204,11 @@ describe("origins and disabled methods", () => {
 
   it("exposes no OTP, two-factor or passkey routes", async () => {
     const auth = createAuth();
-    for (const path of ["/email-otp/send-verification-otp", "/two-factor/enable", "/passkey/generate-register-options"]) {
+    for (const path of [
+      "/email-otp/send-verification-otp",
+      "/two-factor/enable",
+      "/passkey/generate-register-options",
+    ]) {
       const res = await post(auth, path, { email: USER.email });
       expect(res.status, path).toBe(404);
     }

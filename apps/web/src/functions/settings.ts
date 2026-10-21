@@ -1,16 +1,15 @@
 import { apiKey, board, createDb, membership, post, postTag, tag, workspace } from "@openheard/db";
-
-import { purgeWorkspaceCache } from "@/lib/cache";
-import { listStatuses } from "@/lib/status-db";
 import { user } from "@openheard/db/schema/auth";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { and, count, eq } from "drizzle-orm";
 import { z } from "zod";
+import { purgeWorkspaceCache } from "@/lib/cache";
+import { assertNotDemo, assertNotDemoIdentity, isDemo } from "@/lib/demo";
 
 import { invalidate } from "@/lib/kv-cache";
-import { assertNotDemo, assertNotDemoIdentity, isDemo } from "@/lib/demo";
 import { requireAdmin, requireUser, sessionMiddleware } from "@/lib/session";
+import { listStatuses } from "@/lib/status-db";
 
 const slug = (s: string) =>
   s
@@ -38,7 +37,11 @@ export const saveWorkspace = createServerFn({ method: "POST" })
         theme: z.enum(["dark", "light"]),
         poweredBy: z.boolean(),
         requireApproval: z.boolean(),
-        accent: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullable().optional(),
+        accent: z
+          .string()
+          .regex(/^#[0-9a-fA-F]{6}$/)
+          .nullable()
+          .optional(),
         whoCanPost: z.enum(["anyone", "members"]).optional(),
         anonymousVoting: z.boolean().optional(),
         showRoadmap: z.boolean().optional(),
@@ -54,7 +57,8 @@ export const saveWorkspace = createServerFn({ method: "POST" })
     // visitor can post or vote are what make it a demo at all.
     if (isDemo(context.workspace)) {
       for (const key of ["whoCanPost", "anonymousVoting", "requireApproval"] as const) {
-        if (data[key] !== undefined && data[key] !== context.workspace[key]) throw new Error("Demo access settings cannot be changed");
+        if (data[key] !== undefined && data[key] !== context.workspace[key])
+          throw new Error("Demo access settings cannot be changed");
       }
     }
     const db = createDb();
@@ -66,13 +70,24 @@ export const saveWorkspace = createServerFn({ method: "POST" })
 
 export const saveBoard = createServerFn({ method: "POST" })
   .middleware([sessionMiddleware])
-  .validator((d: unknown) => z.object({ id: z.string().optional(), name: z.string().trim().min(1).max(60), description: z.string().trim().max(200).optional() }).parse(d))
+  .validator((d: unknown) =>
+    z
+      .object({
+        id: z.string().optional(),
+        name: z.string().trim().min(1).max(60),
+        description: z.string().trim().max(200).optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     requireAdmin(context.user);
     const db = createDb();
     const ws = context.workspace.id;
     if (data.id) {
-      await db.update(board).set({ name: data.name, description: data.description ?? null }).where(and(eq(board.id, data.id), eq(board.workspaceId, ws)));
+      await db
+        .update(board)
+        .set({ name: data.name, description: data.description ?? null })
+        .where(and(eq(board.id, data.id), eq(board.workspaceId, ws)));
       void invalidate(`workspace:${ws}`);
       purgeWorkspaceCache(new URL(getRequest().url).origin);
       return { id: data.id };
@@ -82,7 +97,9 @@ export const saveBoard = createServerFn({ method: "POST" })
     let id = ws === "default" ? slug(data.name) : `${ws}-${slug(data.name)}`;
     if (await assertIdFree(db, board, id, ws)) id = `${id}-${n + 1}`;
     await assertIdFree(db, board, id, ws);
-    await db.insert(board).values({ id, workspaceId: ws, name: data.name, description: data.description ?? null, position: n });
+    await db
+      .insert(board)
+      .values({ id, workspaceId: ws, name: data.name, description: data.description ?? null, position: n });
     void invalidate(`workspace:${ws}`);
     purgeWorkspaceCache(new URL(getRequest().url).origin);
     return { id };
@@ -94,7 +111,10 @@ export const deleteBoard = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     requireAdmin(context.user);
     const db = createDb();
-    const [{ n }] = await db.select({ n: count() }).from(post).where(and(eq(post.boardId, data.id), eq(post.workspaceId, context.workspace.id)));
+    const [{ n }] = await db
+      .select({ n: count() })
+      .from(post)
+      .where(and(eq(post.boardId, data.id), eq(post.workspaceId, context.workspace.id)));
     if (n > 0) throw new Error(`This board has ${n} posts. Move or delete them first.`);
     await db.delete(board).where(and(eq(board.id, data.id), eq(board.workspaceId, context.workspace.id)));
     void invalidate(`workspace:${context.workspace.id}`);
@@ -125,7 +145,9 @@ export const deleteTag = createServerFn({ method: "POST" })
   .validator((d: unknown) => z.object({ id: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
     requireAdmin(context.user);
-    await createDb().delete(tag).where(and(eq(tag.id, data.id), eq(tag.workspaceId, context.workspace.id)));
+    await createDb()
+      .delete(tag)
+      .where(and(eq(tag.id, data.id), eq(tag.workspaceId, context.workspace.id)));
     void invalidate(`workspace:${context.workspace.id}`);
     purgeWorkspaceCache(new URL(getRequest().url).origin);
     return { ok: true };
@@ -148,7 +170,11 @@ export const getNotificationPrefs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const u = requireUser(context.user);
     const [m] = await createDb()
-      .select({ notifyNewPost: membership.notifyNewPost, notifyComment: membership.notifyComment, notifyStatus: membership.notifyStatus })
+      .select({
+        notifyNewPost: membership.notifyNewPost,
+        notifyComment: membership.notifyComment,
+        notifyStatus: membership.notifyStatus,
+      })
       .from(membership)
       .where(and(eq(membership.workspaceId, context.workspace.id), eq(membership.userId, u.id)));
     return m ?? { notifyNewPost: true, notifyComment: true, notifyStatus: false };
@@ -156,10 +182,15 @@ export const getNotificationPrefs = createServerFn({ method: "GET" })
 
 export const saveNotificationPrefs = createServerFn({ method: "POST" })
   .middleware([sessionMiddleware])
-  .validator((d: unknown) => z.object({ notifyNewPost: z.boolean(), notifyComment: z.boolean(), notifyStatus: z.boolean() }).parse(d))
+  .validator((d: unknown) =>
+    z.object({ notifyNewPost: z.boolean(), notifyComment: z.boolean(), notifyStatus: z.boolean() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const u = requireUser(context.user);
-    await createDb().update(membership).set(data).where(and(eq(membership.workspaceId, context.workspace.id), eq(membership.userId, u.id)));
+    await createDb()
+      .update(membership)
+      .set(data)
+      .where(and(eq(membership.workspaceId, context.workspace.id), eq(membership.userId, u.id)));
     return { ok: true };
   });
 
@@ -176,7 +207,14 @@ export const listApiKeys = createServerFn({ method: "GET" })
     requireAdmin(context.user);
     assertNotDemo(context.workspace);
     return createDb()
-      .select({ id: apiKey.id, name: apiKey.name, prefix: apiKey.prefix, createdAt: apiKey.createdAt, lastUsedAt: apiKey.lastUsedAt, revokedAt: apiKey.revokedAt })
+      .select({
+        id: apiKey.id,
+        name: apiKey.name,
+        prefix: apiKey.prefix,
+        createdAt: apiKey.createdAt,
+        lastUsedAt: apiKey.lastUsedAt,
+        revokedAt: apiKey.revokedAt,
+      })
       .from(apiKey)
       .where(eq(apiKey.workspaceId, context.workspace.id))
       .orderBy(apiKey.createdAt);
@@ -193,7 +231,16 @@ export const createApiKey = createServerFn({ method: "POST" })
     const secret = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
     const key = `oh_${secret}`;
     const prefix = key.slice(0, 11);
-    await createDb().insert(apiKey).values({ id: crypto.randomUUID(), workspaceId: context.workspace.id, name: data.name, prefix, hash: await sha256(key), createdBy: u.id });
+    await createDb()
+      .insert(apiKey)
+      .values({
+        id: crypto.randomUUID(),
+        workspaceId: context.workspace.id,
+        name: data.name,
+        prefix,
+        hash: await sha256(key),
+        createdBy: u.id,
+      });
     return { key };
   });
 
@@ -203,7 +250,10 @@ export const revokeApiKey = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     requireAdmin(context.user);
     assertNotDemo(context.workspace);
-    await createDb().update(apiKey).set({ revokedAt: new Date() }).where(and(eq(apiKey.id, data.id), eq(apiKey.workspaceId, context.workspace.id)));
+    await createDb()
+      .update(apiKey)
+      .set({ revokedAt: new Date() })
+      .where(and(eq(apiKey.id, data.id), eq(apiKey.workspaceId, context.workspace.id)));
     return { ok: true };
   });
 
@@ -217,7 +267,12 @@ export const exportPosts = createServerFn({ method: "GET" })
     const db = createDb();
     const rows = await db.query.post.findMany({
       where: eq(post.workspaceId, context.workspace.id),
-      with: { author: { columns: { name: true, email: true } }, board: { columns: { name: true } }, tags: { with: { tag: true } }, comments: { with: { author: { columns: { name: true, email: true } } } } },
+      with: {
+        author: { columns: { name: true, email: true } },
+        board: { columns: { name: true } },
+        tags: { with: { tag: true } },
+        comments: { with: { author: { columns: { name: true, email: true } } } },
+      },
     });
     return rows.map((p) => ({
       id: p.id,
@@ -229,7 +284,9 @@ export const exportPosts = createServerFn({ method: "GET" })
       votes: p.voteCount,
       author: p.author ? { name: p.author.name, email: p.author.email } : null,
       createdAt: p.createdAt,
-      comments: p.comments.filter((c) => !c.internal).map((c) => ({ body: c.body, author: c.author?.name ?? null, createdAt: c.createdAt })),
+      comments: p.comments
+        .filter((c) => !c.internal)
+        .map((c) => ({ body: c.body, author: c.author?.name ?? null, createdAt: c.createdAt })),
     }));
   });
 
@@ -275,9 +332,21 @@ export const importPosts = createServerFn({ method: "POST" })
     const byKind = (k: string) => statuses.find((s) => s.kind === k)?.key;
     const openKey = byKind("open") ?? "open";
 
-    const boards = new Map((await db.select({ id: board.id, name: board.name }).from(board).where(eq(board.workspaceId, ws))).map((b) => [b.name.toLowerCase(), b.id]));
-    const tags = new Map((await db.select({ id: tag.id, name: tag.name }).from(tag).where(eq(tag.workspaceId, ws))).map((t) => [t.name.toLowerCase(), t.id]));
-    const users = new Map((await db.select({ id: user.id, email: user.email }).from(user)).map((u) => [u.email.toLowerCase(), u.id]));
+    const boards = new Map(
+      (await db.select({ id: board.id, name: board.name }).from(board).where(eq(board.workspaceId, ws))).map((b) => [
+        b.name.toLowerCase(),
+        b.id,
+      ]),
+    );
+    const tags = new Map(
+      (await db.select({ id: tag.id, name: tag.name }).from(tag).where(eq(tag.workspaceId, ws))).map((t) => [
+        t.name.toLowerCase(),
+        t.id,
+      ]),
+    );
+    const users = new Map(
+      (await db.select({ id: user.id, email: user.email }).from(user)).map((u) => [u.email.toLowerCase(), u.id]),
+    );
     const [{ n: boardCount }] = await db.select({ n: count() }).from(board).where(eq(board.workspaceId, ws));
     let nextBoardPos = boardCount;
     let created = 0;
@@ -290,7 +359,10 @@ export const importPosts = createServerFn({ method: "POST" })
         boardId = (ws === "default" ? slug(boardName) : `${ws}-${slug(boardName)}`) || "board";
         if ([...boards.values()].includes(boardId)) boardId = `${boardId}-${nextBoardPos + 1}`;
         await assertIdFree(db, board, boardId, ws);
-        await db.insert(board).values({ id: boardId, workspaceId: ws, name: boardName, position: nextBoardPos++ }).onConflictDoNothing();
+        await db
+          .insert(board)
+          .values({ id: boardId, workspaceId: ws, name: boardName, position: nextBoardPos++ })
+          .onConflictDoNothing();
         boards.set(boardName.toLowerCase(), boardId);
       }
       // Author: reuse by email, else create a member account they can claim later.
@@ -300,7 +372,16 @@ export const importPosts = createServerFn({ method: "POST" })
         authorId = users.get(email) ?? null;
         if (!authorId) {
           authorId = crypto.randomUUID();
-          await db.insert(user).values({ id: authorId, name: r.authorName || email.split("@")[0]!, email, emailVerified: false, role: "member" }).onConflictDoNothing();
+          await db
+            .insert(user)
+            .values({
+              id: authorId,
+              name: r.authorName || email.split("@")[0]!,
+              email,
+              emailVerified: false,
+              role: "member",
+            })
+            .onConflictDoNothing();
           users.set(email, authorId);
         }
       }
@@ -314,7 +395,19 @@ export const importPosts = createServerFn({ method: "POST" })
       const createdAt = r.createdAt && !Number.isNaN(Date.parse(r.createdAt)) ? new Date(r.createdAt) : new Date();
       const [p] = await db
         .insert(post)
-        .values({ workspaceId: ws, boardId, authorId, title: r.title, body: r.body, status: statusKey, voteCount: r.votes, eta: r.eta || null, createdAt, updatedAt: createdAt, statusChangedAt: createdAt })
+        .values({
+          workspaceId: ws,
+          boardId,
+          authorId,
+          title: r.title,
+          body: r.body,
+          status: statusKey,
+          voteCount: r.votes,
+          eta: r.eta || null,
+          createdAt,
+          updatedAt: createdAt,
+          statusChangedAt: createdAt,
+        })
         .returning({ id: post.id });
       for (const name of r.tags) {
         let tagId = tags.get(name.toLowerCase());

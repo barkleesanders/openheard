@@ -1,16 +1,20 @@
 import { Button } from "@openheard/ui/components/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@openheard/ui/components/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@openheard/ui/components/dropdown-menu";
 import { CaretDownIcon, EnvelopeSimpleIcon, TrashSimpleIcon, XIcon } from "@phosphor-icons/react";
 import { createFileRoute, useLoaderData, useRouter } from "@tanstack/react-router";
+import { useState } from "react";
 import { toast } from "sonner";
-
 import { SectionHead } from "@/components/admin/panel";
 import { Avatar } from "@/components/bits";
 import { listMembers, setRole } from "@/functions/admin";
 import { createInvite, listInvites, removeMember, revokeInvite } from "@/functions/invites";
 import { since } from "@/lib/time";
 import { PageHead } from "@/routes/dashboard/settings";
-import { useState } from "react";
 
 export const Route = createFileRoute("/dashboard/settings/team")({
   loader: async () => {
@@ -46,7 +50,10 @@ function Team() {
 
   return (
     <>
-      <PageHead title="Team" sub="Admins run the board and see internal notes. Members are everyone else who signed up." />
+      <PageHead
+        title="Team"
+        sub="Admins run the board and see internal notes. Members are everyone else who signed up."
+      />
       <form className="flex items-center gap-2 rounded-lg border bg-card py-2.5 pr-2.5 pl-3.5" onSubmit={handleInvite}>
         <EnvelopeSimpleIcon className="size-3.5 text-faint" />
         <input
@@ -89,7 +96,14 @@ function Team() {
       ) : null}
 
       <div className="pt-7">
-        <SectionHead title="People" right={<span className="text-xs text-faint">{admins} {admins === 1 ? "admin" : "admins"}</span>} />
+        <SectionHead
+          title="People"
+          right={
+            <span className="text-xs text-faint">
+              {admins} {admins === 1 ? "admin" : "admins"}
+            </span>
+          }
+        />
       </div>
       {members.map((m) => {
         const you = m.id === root.user?.id;
@@ -99,13 +113,18 @@ function Team() {
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="flex items-center gap-1.5 text-[13px] font-semibold">
                 {m.name}
-                {you ? <span className="rounded-full bg-secondary px-1.5 text-[11px] font-normal text-faint">you</span> : null}
+                {you ? (
+                  <span className="rounded-full bg-secondary px-1.5 text-[11px] font-normal text-faint">you</span>
+                ) : null}
               </span>
               <span className="text-xs text-faint">{m.email}</span>
             </div>
             <span className="text-xs text-faint">joined {since(m.createdAt)}</span>
             <DropdownMenu>
-              <DropdownMenuTrigger disabled={you} className="inline-flex h-[26px] items-center gap-1.5 rounded-md border border-input bg-card px-2 text-xs capitalize outline-none hover:bg-accent disabled:opacity-60">
+              <DropdownMenuTrigger
+                disabled={you}
+                className="inline-flex h-[26px] items-center gap-1.5 rounded-md border border-input bg-card px-2 text-xs capitalize outline-none hover:bg-accent disabled:opacity-60"
+              >
                 {m.role} <CaretDownIcon className="size-2.5 text-faint" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-32">

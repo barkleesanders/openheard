@@ -12,7 +12,8 @@ export const Route = createFileRoute("/dashboard/settings/general")({
   component: General,
 });
 
-const input = "h-8 w-[280px] rounded-lg border border-input bg-card px-2.5 text-[13px] outline-none placeholder:text-faint focus:border-ring/60";
+const input =
+  "h-8 w-[280px] rounded-lg border border-input bg-card px-2.5 text-[13px] outline-none placeholder:text-faint focus:border-ring/60";
 
 function General() {
   const root = useLoaderData({ from: "__root__" });
@@ -23,7 +24,16 @@ function General() {
   const dirty = name !== ws.name || tagline !== ws.tagline;
 
   function save() {
-    saveWorkspace({ data: { name, tagline, theme: ws.theme === "light" ? "light" : "dark", poweredBy: ws.poweredBy, requireApproval: ws.requireApproval, accent: ws.accent } })
+    saveWorkspace({
+      data: {
+        name,
+        tagline,
+        theme: ws.theme === "light" ? "light" : "dark",
+        poweredBy: ws.poweredBy,
+        requireApproval: ws.requireApproval,
+        accent: ws.accent,
+      },
+    })
       .then(() => router.invalidate())
       .catch((err) => toast.error(err instanceof Error ? err.message : "Could not save"));
   }
@@ -40,7 +50,12 @@ function General() {
       </Row>
       <div className="flex items-center justify-end gap-3 border-t pt-4">
         <span className="text-xs text-faint">{dirty ? "Unsaved changes" : "Saved"}</span>
-        <LoadingButton onAction={save} disabled={!dirty} successLabel="Saved" onError={(err) => toast.error(err instanceof Error ? err.message : "Could not save")}>
+        <LoadingButton
+          onAction={save}
+          disabled={!dirty}
+          successLabel="Saved"
+          onError={(err) => toast.error(err instanceof Error ? err.message : "Could not save")}
+        >
           Save
         </LoadingButton>
       </div>

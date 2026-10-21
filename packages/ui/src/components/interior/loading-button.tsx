@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const CELL = { type: "spring", stiffness: 520, damping: 34, mass: 0.45 } as const;
 const CROSSFADE = { type: "spring", stiffness: 260, damping: 34, mass: 0.8 } as const;
@@ -15,11 +15,7 @@ export type UseAsyncActionOptions = {
   onError?: (error: unknown) => void;
 };
 
-export function useAsyncAction({
-  action,
-  resetAfter = 1400,
-  onError,
-}: UseAsyncActionOptions) {
+export function useAsyncAction({ action, resetAfter = 1400, onError }: UseAsyncActionOptions) {
   const [status, setStatus] = useState<AsyncActionStatus>("idle");
 
   const phase = useRef<AsyncActionStatus>("idle");
@@ -106,38 +102,17 @@ function Spinner({ still }: { still: boolean }) {
       aria-hidden="true"
       className="shrink-0"
       animate={still ? undefined : { rotate: 360 }}
-      transition={
-        still ? undefined : { duration: 0.85, repeat: Infinity, ease: "linear" }
-      }
+      transition={still ? undefined : { duration: 0.85, repeat: Infinity, ease: "linear" }}
     >
-      <circle
-        cx="6"
-        cy="6"
-        r="4.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeOpacity="0.22"
-      />
-      <path
-        d="M10.5 6A4.5 4.5 0 0 0 6 1.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
+      <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.22" />
+      <path d="M10.5 6A4.5 4.5 0 0 0 6 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </motion.svg>
   );
 }
 
 function CheckMark() {
   return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 12 12"
-      fill="none"
-      aria-hidden="true"
-      className="shrink-0"
-    >
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="shrink-0">
       <path
         d="M2.6 6.3 4.9 8.6 9.4 3.6"
         stroke="currentColor"
@@ -151,14 +126,7 @@ function CheckMark() {
 
 function AlertMark() {
   return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 12 12"
-      fill="none"
-      aria-hidden="true"
-      className="shrink-0"
-    >
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="shrink-0">
       <path d="M6 2.9v3.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
       <path d="M6 9.05h.01" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
     </svg>
@@ -197,7 +165,6 @@ export function LoadingButton({
   });
 
   const fade = reduced ? INSTANT : CROSSFADE;
-
 
   const label =
     status === "pending"

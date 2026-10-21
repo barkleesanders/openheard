@@ -1,10 +1,15 @@
-import { ArrowLeftIcon, CheckCircleIcon, GlobeSimpleIcon, LockSimpleIcon, WarningCircleIcon } from "@phosphor-icons/react";
+import { Button } from "@openheard/ui/components/button";
+import { cn } from "@openheard/ui/lib/utils";
+import {
+  ArrowLeftIcon,
+  CheckCircleIcon,
+  GlobeSimpleIcon,
+  LockSimpleIcon,
+  WarningCircleIcon,
+} from "@phosphor-icons/react";
 import { createFileRoute, useLoaderData, useRouter } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-
-import { Button } from "@openheard/ui/components/button";
-import { cn } from "@openheard/ui/lib/utils";
 import { AuthForm } from "@/components/auth-form";
 import Logo from "@/components/logo";
 import { checkSlug, createWorkspace } from "@/functions/admin";
@@ -17,7 +22,11 @@ const STORAGE_KEY = "openheard:onboarding";
 const STEPS = 3;
 
 const slugify = (s: string) =>
-  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32);
+  s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32);
 
 type OnboardingData = {
   name: string;
@@ -50,7 +59,10 @@ export const Route = createFileRoute("/start")({
       if (typeof sessionStorage !== "undefined") {
         const pending = consumePendingAction();
         if (pending?.type === "create-workspace") {
-          sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ name: pending.name, slug: pending.slug, whoCanPost: pending.whoCanPost }));
+          sessionStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({ name: pending.name, slug: pending.slug, whoCanPost: pending.whoCanPost }),
+          );
         }
       }
     }
@@ -99,7 +111,10 @@ function StartPage() {
   const debouncedCheck = useCallback((s: string) => {
     clearTimeout(debounceRef.current);
     setSlugStatus(null);
-    if (s.length < 5) { setSlugChecking(false); return; }
+    if (s.length < 5) {
+      setSlugChecking(false);
+      return;
+    }
     setSlugChecking(true);
     debounceRef.current = setTimeout(async () => {
       try {
@@ -201,9 +216,7 @@ function StartPage() {
         {step === 1 && (
           <div className="flex w-full flex-col items-center gap-6">
             <div className="flex flex-col items-center gap-1.5 text-center">
-              <h1 className="text-[22px] font-semibold tracking-[-0.02em]">
-                What is your company or product called?
-              </h1>
+              <h1 className="text-[22px] font-semibold tracking-[-0.02em]">What is your company or product called?</h1>
             </div>
             <div className="flex w-full flex-col gap-2.5">
               <label className="flex h-10 items-center gap-2.5 rounded-lg border border-input bg-card px-3 text-faint transition-colors focus-within:border-ring/60 focus-within:ring-1 focus-within:ring-ring/40">
@@ -217,7 +230,9 @@ function StartPage() {
                   placeholder="Acme"
                   maxLength={60}
                   className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-faint"
-                  onKeyDown={(e) => { if (e.key === "Enter") next(); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") next();
+                  }}
                 />
               </label>
               <div className="flex items-center gap-2">
@@ -232,7 +247,9 @@ function StartPage() {
                     placeholder="acme"
                     maxLength={32}
                     className="min-w-0 flex-1 bg-transparent font-mono text-[13px] text-foreground outline-none placeholder:text-faint"
-                    onKeyDown={(e) => { if (e.key === "Enter") next(); }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") next();
+                    }}
                   />
                   <span className="font-mono text-[13px] text-faint">.{rootDomain ?? "openheard.com"}</span>
                 </label>
@@ -247,9 +264,7 @@ function StartPage() {
               {slug.length > 0 && slug.length < 5 && (
                 <p className="text-[13px] text-red-400">Slug must be at least 5 characters</p>
               )}
-              {slugStatus?.available === true && (
-                <p className="text-[13px] text-emerald-500">Available</p>
-              )}
+              {slugStatus?.available === true && <p className="text-[13px] text-emerald-500">Available</p>}
               {slugStatus && !slugStatus.available && slug.length >= 5 && (
                 <p className="text-[13px] text-red-400">
                   That slug is taken
@@ -281,9 +296,7 @@ function StartPage() {
         {step === 2 && (
           <div className="flex w-full flex-col items-center gap-6">
             <div className="flex flex-col items-center gap-1.5 text-center">
-              <h1 className="text-[22px] font-semibold tracking-[-0.02em]">
-                Who can see your board?
-              </h1>
+              <h1 className="text-[22px] font-semibold tracking-[-0.02em]">Who can see your board?</h1>
             </div>
             <div className="flex w-full flex-col gap-3">
               <AccessCard
@@ -324,7 +337,11 @@ function StartPage() {
         {/* Step indicator and back */}
         <div className="flex items-center gap-4">
           {step > 1 && (
-            <button type="button" onClick={back} className="flex items-center gap-1 text-xs text-faint hover:text-foreground">
+            <button
+              type="button"
+              onClick={back}
+              className="flex items-center gap-1 text-xs text-faint hover:text-foreground"
+            >
               <ArrowLeftIcon className="size-3" /> Back
             </button>
           )}
@@ -364,14 +381,14 @@ function AccessCard({
       onClick={onClick}
       className={cn(
         "flex w-full items-center gap-4 rounded-lg border px-4 py-3.5 text-left transition-colors",
-        selected
-          ? "border-ring/60 bg-accent ring-1 ring-ring/40"
-          : "border-input bg-card hover:bg-accent/60",
+        selected ? "border-ring/60 bg-accent ring-1 ring-ring/40" : "border-input bg-card hover:bg-accent/60",
       )}
     >
       <span className={cn("text-faint", selected && "text-foreground")}>{icon}</span>
       <div>
-        <span className={cn("text-sm font-semibold", selected ? "text-foreground" : "text-muted-foreground")}>{title}</span>
+        <span className={cn("text-sm font-semibold", selected ? "text-foreground" : "text-muted-foreground")}>
+          {title}
+        </span>
         <p className="text-[13px] text-muted-foreground">{description}</p>
       </div>
     </button>

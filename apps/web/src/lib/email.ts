@@ -1,4 +1,4 @@
-import { editorialEmailHtml, editorialEmailText, type EditorialEmail } from "@openheard/auth/email-template";
+import { type EditorialEmail, editorialEmailHtml, editorialEmailText } from "@openheard/auth/email-template";
 
 // Notification mail (invites) shares the auth mail design in
 // @openheard/auth/email-template: one template, one escaping path, one marker.
@@ -22,11 +22,21 @@ export function renderInviteEmail(inviterName: string, workspaceName: string, jo
     cta: { label: "Accept invite", url: joinUrl },
     footer: "This invite link expires in 7 days.",
   };
-  return { subject: `${inviter} invited you to ${workspace}`, html: editorialEmailHtml(m), text: editorialEmailText(m) };
+  return {
+    subject: `${inviter} invited you to ${workspace}`,
+    html: editorialEmailHtml(m),
+    text: editorialEmailText(m),
+  };
 }
 
 type Mailer = {
-  send(message: { to: string; from: { email: string; name: string }; subject: string; html: string; text: string }): Promise<{ messageId?: string } | null | undefined>;
+  send(message: {
+    to: string;
+    from: { email: string; name: string };
+    subject: string;
+    html: string;
+    text: string;
+  }): Promise<{ messageId?: string } | null | undefined>;
 };
 
 export async function sendEmail(to: string, subject: string, html: string, text: string) {
@@ -34,7 +44,9 @@ export async function sendEmail(to: string, subject: string, html: string, text:
     const { env } = await import("@openheard/env/server");
     const mailer = (env as unknown as { EMAIL?: Mailer }).EMAIL;
     if (!mailer) {
-      console.log(`[email] No EMAIL binding — logging instead\n  To: ${to}\n  Subject: ${subject}\n  ${text.replace(/\n/g, "\n  ")}`);
+      console.log(
+        `[email] No EMAIL binding — logging instead\n  To: ${to}\n  Subject: ${subject}\n  ${text.replace(/\n/g, "\n  ")}`,
+      );
       return;
     }
     const result = await mailer.send({ to, from: FROM, subject, html, text });

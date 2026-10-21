@@ -39,7 +39,9 @@ export const workspace = sqliteTable("workspace", {
   heardAboutUs: text("heard_about_us"),
   // Access. Who may post, whether logged-out visitors can vote, which public
   // tabs exist.
-  whoCanPost: text("who_can_post", { enum: ["anyone", "members"] }).notNull().default("anyone"),
+  whoCanPost: text("who_can_post", { enum: ["anyone", "members"] })
+    .notNull()
+    .default("anyone"),
   anonymousVoting: integer("anonymous_voting", { mode: "boolean" }).notNull().default(false),
   showRoadmap: integer("show_roadmap", { mode: "boolean" }).notNull().default(true),
   showChangelog: integer("show_changelog", { mode: "boolean" }).notNull().default(true),
@@ -261,7 +263,10 @@ export const changelogPost = sqliteTable(
   (t) => [primaryKey({ columns: [t.entryId, t.postId] }), uniqueIndex("changelog_post_uidx").on(t.entryId, t.postId)],
 );
 
-export const workspaceRelations = relations(workspace, ({ many }) => ({ members: many(membership), boards: many(board) }));
+export const workspaceRelations = relations(workspace, ({ many }) => ({
+  members: many(membership),
+  boards: many(board),
+}));
 
 export const membershipRelations = relations(membership, ({ one }) => ({
   workspace: one(workspace, { fields: [membership.workspaceId], references: [workspace.id] }),
@@ -309,7 +314,10 @@ export const inviteRelations = relations(invite, ({ one }) => ({
   workspace: one(workspace, { fields: [invite.workspaceId], references: [workspace.id] }),
 }));
 
-export const boardRelations = relations(board, ({ one, many }) => ({ workspace: one(workspace, { fields: [board.workspaceId], references: [workspace.id] }), posts: many(post) }));
+export const boardRelations = relations(board, ({ one, many }) => ({
+  workspace: one(workspace, { fields: [board.workspaceId], references: [workspace.id] }),
+  posts: many(post),
+}));
 
 export const postRelations = relations(post, ({ one, many }) => ({
   board: one(board, { fields: [post.boardId], references: [board.id] }),

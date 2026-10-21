@@ -2,25 +2,20 @@
 
 import { Button } from "@openheard/ui/components/button";
 import { cn } from "@openheard/ui/lib/utils";
+import { ArrowDownIcon } from "@phosphor-icons/react";
 import {
   MessageScroller as MessageScrollerPrimitive,
   useMessageScroller,
   useMessageScrollerScrollable,
   useMessageScrollerVisibility,
 } from "@shadcn/react/message-scroller";
-import { ArrowDownIcon } from "@phosphor-icons/react";
-import * as React from "react";
+import type * as React from "react";
 
-function MessageScrollerProvider(
-  props: React.ComponentProps<typeof MessageScrollerPrimitive.Provider>,
-) {
+function MessageScrollerProvider(props: React.ComponentProps<typeof MessageScrollerPrimitive.Provider>) {
   return <MessageScrollerPrimitive.Provider {...props} />;
 }
 
-function MessageScroller({
-  className,
-  ...props
-}: React.ComponentProps<typeof MessageScrollerPrimitive.Root>) {
+function MessageScroller({ className, ...props }: React.ComponentProps<typeof MessageScrollerPrimitive.Root>) {
   return (
     <MessageScrollerPrimitive.Root
       data-slot="message-scroller"
@@ -107,9 +102,7 @@ function MessageScrollerButton({
       {children ?? (
         <>
           <ArrowDownIcon />
-          <span className="sr-only">
-            {direction === "end" ? "Scroll to end" : "Scroll to start"}
-          </span>
+          <span className="sr-only">{direction === "end" ? "Scroll to end" : "Scroll to start"}</span>
         </>
       )}
     </MessageScrollerPrimitive.Button>
@@ -117,12 +110,12 @@ function MessageScrollerButton({
 }
 
 export {
-  MessageScrollerProvider,
   MessageScroller,
-  MessageScrollerViewport,
+  MessageScrollerButton,
   MessageScrollerContent,
   MessageScrollerItem,
-  MessageScrollerButton,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
   useMessageScroller,
   useMessageScrollerScrollable,
   useMessageScrollerVisibility,

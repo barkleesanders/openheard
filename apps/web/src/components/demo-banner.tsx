@@ -14,7 +14,9 @@ export function DemoBanner() {
   return (
     <div className="flex h-9 shrink-0 items-center gap-3 border-b px-4">
       <span className="font-mono text-[11px] tracking-[0.06em] text-faint uppercase">Demo</span>
-      <p className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">Everything here is shared, and everything resets every night.</p>
+      <p className="min-w-0 flex-1 truncate text-[13px] text-muted-foreground">
+        Everything here is shared, and everything resets every night.
+      </p>
       <button
         type="button"
         onClick={() => {

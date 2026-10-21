@@ -1,7 +1,12 @@
-import { CheckCircleIcon, GlobeSimpleIcon, LinkSimpleIcon, MonitorIcon, WarningCircleIcon } from "@phosphor-icons/react";
-import { useState } from "react";
-
 import { Button } from "@openheard/ui/components/button";
+import {
+  CheckCircleIcon,
+  GlobeSimpleIcon,
+  LinkSimpleIcon,
+  MonitorIcon,
+  WarningCircleIcon,
+} from "@phosphor-icons/react";
+import { useState } from "react";
 
 // The one workspace form. "create" asks for a subdomain and makes a new
 // workspace; "setup" fills in an existing one (first run on a self-hosted
@@ -13,7 +18,15 @@ export const slugify = (s: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 32);
 
-const HEARD_OPTIONS = ["Twitter / X", "Product Hunt", "GitHub", "Blog post", "Search engine", "Friend or colleague", "Other"];
+const HEARD_OPTIONS = [
+  "Twitter / X",
+  "Product Hunt",
+  "GitHub",
+  "Blog post",
+  "Search engine",
+  "Friend or colleague",
+  "Other",
+];
 
 export type WorkspaceFormValues = { name: string; slug: string; website: string; heardAboutUs: string };
 
@@ -41,7 +54,11 @@ export function WorkspaceForm({
   const [busy, setBusy] = useState(false);
 
   const finalSlug = slugTouched ? slugify(slug) : slugify(name);
-  const normalizedWebsite = website.trim() ? (/^https?:\/\//i.test(website.trim()) ? website.trim() : "https://" + website.trim()) : "";
+  const normalizedWebsite = website.trim()
+    ? /^https?:\/\//i.test(website.trim())
+      ? website.trim()
+      : "https://" + website.trim()
+    : "";
   const websiteValid = /^https?:\/\/[^\s.]+\.[^\s]+$/.test(normalizedWebsite);
   const nameValid = name.trim().length >= 2;
   const slugTooShort = finalSlug.length > 0 && finalSlug.length < 5;
@@ -69,14 +86,23 @@ export function WorkspaceForm({
     <form onSubmit={submit} onKeyDown={handleKeyDown} className="flex w-full max-w-[480px] flex-col gap-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-[22px] font-semibold tracking-[-0.02em]">Create your workspace</h1>
-        <p className="text-sm text-muted-foreground">Set up a space to collect feedback, plan your roadmap, and share updates.</p>
+        <p className="text-sm text-muted-foreground">
+          Set up a space to collect feedback, plan your roadmap, and share updates.
+        </p>
       </div>
 
       <div className="flex flex-col gap-5">
         <Field label="Website" optional>
           <div className="flex items-center gap-2.5">
             <FieldBox icon={<GlobeSimpleIcon className="size-[15px]" />}>
-              <input type="text" inputMode="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="example.com" className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-faint" />
+              <input
+                type="text"
+                inputMode="url"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                placeholder="example.com"
+                className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-faint"
+              />
             </FieldBox>
             {websiteValid ? <CheckCircleIcon weight="fill" className="size-5 shrink-0 text-emerald-500" /> : null}
           </div>
@@ -85,7 +111,15 @@ export function WorkspaceForm({
         <Field label="Workspace name">
           <div className="flex items-center gap-2.5">
             <FieldBox icon={<MonitorIcon className="size-[15px]" />}>
-              <input value={name} onChange={(e) => setName(e.target.value)} required minLength={2} maxLength={60} placeholder="Acme" className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-faint" />
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                minLength={2}
+                maxLength={60}
+                placeholder="Acme"
+                className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-faint"
+              />
             </FieldBox>
             {nameValid ? <CheckCircleIcon weight="fill" className="size-5 shrink-0 text-emerald-500" /> : null}
           </div>
@@ -108,16 +142,26 @@ export function WorkspaceForm({
                   />
                   <span className="font-mono text-sm text-faint">.{domainSuffix}</span>
                 </FieldBox>
-                {slugValid && finalSlug ? <CheckCircleIcon weight="fill" className="size-5 shrink-0 text-emerald-500" /> : slugTooShort && slugBlurred ? <WarningCircleIcon weight="fill" className="size-5 shrink-0 text-red-500" /> : null}
+                {slugValid && finalSlug ? (
+                  <CheckCircleIcon weight="fill" className="size-5 shrink-0 text-emerald-500" />
+                ) : slugTooShort && slugBlurred ? (
+                  <WarningCircleIcon weight="fill" className="size-5 shrink-0 text-red-500" />
+                ) : null}
               </div>
-              {slugTooShort && slugBlurred ? <p className="text-[13px] text-red-400">Must be at least 5 characters long</p> : null}
+              {slugTooShort && slugBlurred ? (
+                <p className="text-[13px] text-red-400">Must be at least 5 characters long</p>
+              ) : null}
             </div>
           </Field>
         ) : null}
 
         {showHeardAbout ? (
           <Field label="Where did you hear about us?" optional>
-            <select value={heardAboutUs} onChange={(e) => setHeardAboutUs(e.target.value)} className="h-10 w-full appearance-none rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none focus:border-ring/60 [&:not(:valid)]:text-faint">
+            <select
+              value={heardAboutUs}
+              onChange={(e) => setHeardAboutUs(e.target.value)}
+              className="h-10 w-full appearance-none rounded-lg border border-input bg-card px-3 text-sm text-foreground outline-none focus:border-ring/60 [&:not(:valid)]:text-faint"
+            >
               <option value="">Select an option</option>
               {HEARD_OPTIONS.map((o) => (
                 <option key={o} value={o}>
@@ -132,7 +176,9 @@ export function WorkspaceForm({
       <div className="flex items-center gap-3">
         <Button type="submit" size="lg" disabled={busy || !nameValid || !slugValid}>
           {busy ? "Creating…" : "Create Workspace"}
-          <kbd className="ml-2 inline-flex items-center gap-0.5 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[11px] text-faint">⌘↵</kbd>
+          <kbd className="ml-2 inline-flex items-center gap-0.5 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[11px] text-faint">
+            ⌘↵
+          </kbd>
         </Button>
       </div>
     </form>
@@ -152,5 +198,10 @@ function Field({ label, optional, children }: { label: string; optional?: boolea
 }
 
 function FieldBox({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
-  return <label className="flex h-10 flex-1 items-center gap-2.5 rounded-lg border border-input bg-card px-3 text-faint transition-colors focus-within:border-ring/60 focus-within:ring-1 focus-within:ring-ring/40">{icon}{children}</label>;
+  return (
+    <label className="flex h-10 flex-1 items-center gap-2.5 rounded-lg border border-input bg-card px-3 text-faint transition-colors focus-within:border-ring/60 focus-within:ring-1 focus-within:ring-ring/40">
+      {icon}
+      {children}
+    </label>
+  );
 }

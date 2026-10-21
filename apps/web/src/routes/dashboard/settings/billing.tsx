@@ -1,18 +1,19 @@
 import { Button } from "@openheard/ui/components/button";
+import { cn } from "@openheard/ui/lib/utils";
 import { CheckIcon } from "@phosphor-icons/react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
 import { SectionHead } from "@/components/admin/panel";
 import { getBilling, openPortal, startCheckout } from "@/functions/billing";
 import { PLANS } from "@/lib/plans";
 import { fullDate } from "@/lib/time";
 import { PageHead } from "@/routes/dashboard/settings";
-import { cn } from "@openheard/ui/lib/utils";
 
 export const Route = createFileRoute("/dashboard/settings/billing")({
-  validateSearch: (s: Record<string, unknown>) => ({ checkout: s.checkout === "success" ? ("success" as const) : undefined }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    checkout: s.checkout === "success" ? ("success" as const) : undefined,
+  }),
   loader: () => getBilling(),
   head: () => ({ meta: [{ title: "Billing · settings" }] }),
   component: Billing,
@@ -82,7 +83,15 @@ function Billing() {
             right={
               <div className="flex gap-0.5 rounded-md bg-secondary p-0.5">
                 {(["month", "year"] as const).map((i) => (
-                  <button key={i} type="button" onClick={() => setBillingInterval(i)} className={cn("rounded-md px-2.5 py-1 text-xs", interval === i ? "bg-accent text-foreground" : "text-faint hover:text-muted-foreground")}>
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setBillingInterval(i)}
+                    className={cn(
+                      "rounded-md px-2.5 py-1 text-xs",
+                      interval === i ? "bg-accent text-foreground" : "text-faint hover:text-muted-foreground",
+                    )}
+                  >
                     {i === "month" ? "Monthly" : "Yearly, save 33%"}
                   </button>
                 ))}
@@ -90,7 +99,18 @@ function Billing() {
             }
           />
           <div className="grid gap-3 sm:grid-cols-2">
-            <Plan name="Free" price="$0" per="forever" current={b.plan === "free"} features={[`${PLANS.free.workspaces} workspaces`, "Unlimited posts and votes", "Public roadmap and changelog", "API and MCP server"]} />
+            <Plan
+              name="Free"
+              price="$0"
+              per="forever"
+              current={b.plan === "free"}
+              features={[
+                `${PLANS.free.workspaces} workspaces`,
+                "Unlimited posts and votes",
+                "Public roadmap and changelog",
+                "API and MCP server",
+              ]}
+            />
             <Plan
               name="Pro"
               price={`$${price}`}
@@ -98,7 +118,12 @@ function Billing() {
               highlight
               features={[`${PLANS.pro.workspaces} workspaces`, "Everything in Free", "Priority support"]}
               action={
-                <Button size="sm" full disabled={busy || !b.configured} onClick={() => go(() => startCheckout({ data: { interval } }))}>
+                <Button
+                  size="sm"
+                  full
+                  disabled={busy || !b.configured}
+                  onClick={() => go(() => startCheckout({ data: { interval } }))}
+                >
                   {b.configured ? "Upgrade" : "Billing not configured"}
                 </Button>
               }
@@ -110,12 +135,37 @@ function Billing() {
   );
 }
 
-function Plan({ name, price, per, features, current, highlight, action }: { name: string; price: string; per: string; features: string[]; current?: boolean; highlight?: boolean; action?: React.ReactNode }) {
+function Plan({
+  name,
+  price,
+  per,
+  features,
+  current,
+  highlight,
+  action,
+}: {
+  name: string;
+  price: string;
+  per: string;
+  features: string[];
+  current?: boolean;
+  highlight?: boolean;
+  action?: React.ReactNode;
+}) {
   return (
-    <div className={cn("flex flex-col gap-4 rounded-lg border p-4", highlight ? "border-link/50 bg-link/[.04]" : "bg-card")}>
+    <div
+      className={cn(
+        "flex flex-col gap-4 rounded-lg border p-4",
+        highlight ? "border-link/50 bg-link/[.04]" : "bg-card",
+      )}
+    >
       <div className="flex items-baseline justify-between">
         <div className="text-[14px] font-semibold">{name}</div>
-        {current ? <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-muted-foreground">Current</span> : null}
+        {current ? (
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            Current
+          </span>
+        ) : null}
       </div>
       <div className="flex items-baseline gap-1.5">
         <span className="text-[26px] font-semibold tracking-[-0.02em]">{price}</span>

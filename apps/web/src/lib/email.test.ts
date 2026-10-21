@@ -51,6 +51,6 @@ describe("invite email", () => {
   });
 
   it("negative control: a message without the marker is not a designed message", () => {
-    expect('<p>Join here: https://x.test/j</p>').not.toContain(EMAIL_DESIGN_MARKER);
+    expect("<p>Join here: https://x.test/j</p>").not.toContain(EMAIL_DESIGN_MARKER);
   });
 });

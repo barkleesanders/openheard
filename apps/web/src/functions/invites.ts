@@ -5,8 +5,8 @@ import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { assertNotDemo, assertNotDemoIdentity } from "@/lib/demo";
-import { requireAdmin, sessionMiddleware } from "@/lib/session";
 import { sendInviteEmail } from "@/lib/email";
+import { requireAdmin, sessionMiddleware } from "@/lib/session";
 
 export const getWorkspaceMemberCount = createServerFn({ method: "GET" })
   .middleware([sessionMiddleware])
@@ -64,9 +64,7 @@ export const revokeInvite = createServerFn({ method: "POST" })
     requireAdmin(context.user);
     assertNotDemo(context.workspace);
     const db = createDb();
-    await db
-      .delete(invite)
-      .where(and(eq(invite.workspaceId, context.workspace.id), eq(invite.token, data.token)));
+    await db.delete(invite).where(and(eq(invite.workspaceId, context.workspace.id), eq(invite.token, data.token)));
     return { ok: true };
   });
 

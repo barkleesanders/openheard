@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const user = sqliteTable("user", {
   id: text("id").primaryKey(),
@@ -8,9 +8,13 @@ export const user = sqliteTable("user", {
   emailVerified: integer("email_verified", { mode: "boolean" }).default(false).notNull(),
   image: text("image"),
   // "admin" sees the inline controls. The first account to sign up gets it.
-  role: text("role", { enum: ["admin", "member"] }).notNull().default("member"),
+  role: text("role", { enum: ["admin", "member"] })
+    .notNull()
+    .default("member"),
   // Billing lives on the account. Free allows a couple of workspaces, Pro more.
-  plan: text("plan", { enum: ["free", "pro"] }).notNull().default("free"),
+  plan: text("plan", { enum: ["free", "pro"] })
+    .notNull()
+    .default("free"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   planRenewsAt: integer("plan_renews_at", { mode: "timestamp_ms" }),

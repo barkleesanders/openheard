@@ -34,14 +34,24 @@ function Profile() {
         <Avatar name={me.name} image={me.image} size={36} />
       </Row>
       <Row label="Name" help="Shown on your comments and in the team list.">
-        <input value={name} onChange={(e) => setName(e.target.value)} aria-label="Display name" className="h-8 w-[280px] rounded-lg border border-input bg-card px-2.5 text-[13px] outline-none focus:border-ring/60" />
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          aria-label="Display name"
+          className="h-8 w-[280px] rounded-lg border border-input bg-card px-2.5 text-[13px] outline-none focus:border-ring/60"
+        />
       </Row>
       <Row label="Email" help="Used to sign in. Changing it lands with email support.">
         <span className="text-[13px] text-muted-foreground">{me.email}</span>
       </Row>
       <div className="flex items-center justify-end gap-3 border-t pt-4">
         <span className="text-xs text-faint">{dirty ? "Unsaved changes" : "Saved"}</span>
-        <LoadingButton onAction={save} disabled={!dirty} successLabel="Saved" onError={(err) => toast.error(err instanceof Error ? err.message : "Could not save")}>
+        <LoadingButton
+          onAction={save}
+          disabled={!dirty}
+          successLabel="Saved"
+          onError={(err) => toast.error(err instanceof Error ? err.message : "Could not save")}
+        >
           Save
         </LoadingButton>
       </div>
