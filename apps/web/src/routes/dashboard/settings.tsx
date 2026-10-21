@@ -38,7 +38,7 @@ function SettingsLayout() {
   })).filter((g) => g.items.length > 0);
   const onLocked = locked.some((slug) => pathname === `/dashboard/settings/${slug}`);
   return (
-    <Panel title="Settings" className="flex flex-col md:flex-row">
+    <Panel title="Settings" titleAs="div" className="flex flex-col md:flex-row">
       <nav className="flex shrink-0 flex-row gap-1 overflow-x-auto border-b px-3 py-2 md:w-[220px] md:flex-col md:overflow-x-visible md:border-r md:border-b-0 md:pt-3 md:pb-4">
         <Link
           to="/dashboard"

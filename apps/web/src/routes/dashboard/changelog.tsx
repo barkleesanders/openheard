@@ -198,7 +198,7 @@ function Editor({ entry, onClose }: { entry: Entry | null; onClose: () => void }
             >
               <ArrowLeftIcon className="size-4" />
             </button>
-            <span className="text-[15px] font-semibold">{entry ? entry.title : "New entry"}</span>
+            <h1 className="text-[15px] font-semibold">{entry ? entry.title : "New entry"}</h1>
             <span
               className={cn(
                 "ml-1 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[12px] font-medium",

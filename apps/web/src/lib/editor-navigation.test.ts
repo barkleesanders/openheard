@@ -3,12 +3,15 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { type ComponentType, createElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+const navigation = vi.hoisted(() => ({ navigate: vi.fn() }));
+
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const router = await importOriginal<typeof import("@tanstack/react-router")>();
   return {
     ...router,
     useLoaderData: () => ({ user: null, boards: [], tags: [], statuses: [], statusCounts: {} }),
     useRouter: () => ({ invalidate: vi.fn() }),
+    useNavigate: () => navigation.navigate,
     Link: ({ to, children, className }: { to: string; children?: React.ReactNode; className?: string }) =>
       createElement("a", { href: to, className }, children),
   };
@@ -25,6 +28,7 @@ vi.mock("@/functions/statuses", () => ({
   saveStatus: vi.fn(),
 }));
 
+import { Panel } from "../components/admin/panel";
 import { GITHUB, Nav } from "../components/landing/top";
 import { Route as BoardsRoute } from "../routes/dashboard/settings/boards";
 import { Route as StatusesRoute } from "../routes/dashboard/settings/statuses";
@@ -33,6 +37,18 @@ import { Route as StatusesRoute } from "../routes/dashboard/settings/statuses";
 Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, value: vi.fn() });
 
 afterEach(cleanup);
+
+describe("admin panel navigation", () => {
+  it("exposes its page heading", () => {
+    render(createElement(Panel, { title: "Posts", children: "Post list" }));
+    expect(screen.getByRole("heading", { name: "Posts", level: 1 })).toBeTruthy();
+  });
+  it("opens notification settings from the bell", () => {
+    render(createElement(Panel, { title: "Posts", children: "Post list" }));
+    fireEvent.click(screen.getByRole("button", { name: /Notification/ }));
+    expect(navigation.navigate).toHaveBeenCalledWith({ to: "/dashboard/settings/notifications" });
+  });
+});
 
 describe("editor focus", () => {
   it("focuses a newly opened board name, then keeps focus while editing its description", () => {

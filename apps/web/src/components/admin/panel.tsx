@@ -13,6 +13,7 @@ export function Panel({
   actions,
   aside,
   onSearch,
+  titleAs: Title = "h1",
 }: {
   title: ReactNode;
   children: ReactNode;
@@ -20,6 +21,7 @@ export function Panel({
   actions?: ReactNode;
   aside?: ReactNode;
   onSearch?: (q: string) => void;
+  titleAs?: "h1" | "div";
 }) {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
@@ -29,7 +31,7 @@ export function Panel({
         {aside}
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div className="flex h-[52px] shrink-0 items-center justify-between border-b px-5">
-            <div className="text-[17px] font-semibold">{title}</div>
+            <Title className="text-[17px] font-semibold">{title}</Title>
             <div className="flex items-center gap-2">
               {actions}
               <form
@@ -63,7 +65,8 @@ export function Panel({
               <button
                 type="button"
                 className="inline-flex size-[30px] items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
-                title="Notifications"
+                title="Notification settings"
+                onClick={() => navigate({ to: "/dashboard/settings/notifications" })}
               >
                 <BellIcon className="size-[15px]" />
               </button>

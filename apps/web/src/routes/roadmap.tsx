@@ -35,7 +35,11 @@ function RoadmapPage() {
 
   return (
     <SkeletonSwap ready={ready} skeleton={<RoadmapSkeleton />}>
-      <div className="mx-auto flex w-full max-w-[1072px] flex-1 flex-col gap-6 px-4 pt-7 pb-6 md:px-8 md:pt-10">
+      <main
+        id="main-content"
+        className="mx-auto flex w-full max-w-[1072px] flex-1 flex-col gap-6 px-4 pt-7 pb-6 md:px-8 md:pt-10"
+      >
+        <h1 className="sr-only">Roadmap</h1>
         {root.boards.length > 1 ? (
           <div className="flex items-center gap-[18px] text-[13px]">
             <button
@@ -77,7 +81,7 @@ function RoadmapPage() {
               <section key={status} className="flex min-w-0 flex-col divide-y divide-white/6">
                 <header className="flex items-center gap-2 px-1 pb-3 text-[13px] font-semibold">
                   <span className="size-2 rounded-full" style={{ background: meta.color }} />
-                  {meta.label}
+                  <h2>{meta.label}</h2>
                   <span className="ml-auto font-mono text-xs font-normal text-faint">{items.length}</span>
                 </header>
                 {items.length === 0 ? <p className="px-1 py-4 text-xs text-faint">Nothing here yet</p> : null}
@@ -107,7 +111,7 @@ function RoadmapPage() {
             );
           })}
         </div>
-      </div>
+      </main>
     </SkeletonSwap>
   );
 }
