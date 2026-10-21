@@ -64,7 +64,7 @@
     "gate:auth-security": "vitest run --config packages/auth/vitest.config.ts",
     "gate:dependency-security": "node scripts/dependency-security.test.mjs",
     "deploy:instance": "bun run gate:dependency-security && bun run gate:auth-security && bun run test:email-design && cd packages/infra && bunx alchemy deploy --stage prod --yes",
-    "test:email-design": "vitest run --config packages/auth/vitest.config.ts src/email-design.test.ts && cd apps/web && vitest run src/lib/email.test.ts"
+    "test:email-design": "vitest run --config packages/auth/vitest.config.ts src/email-design.test.ts && cd apps/web && vitest run src/lib/email.test.ts src/lib/email-test-route.test.ts"
   },
   "dependencies": {
     "@openheard/env": "workspace:*",

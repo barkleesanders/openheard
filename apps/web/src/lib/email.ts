@@ -29,7 +29,7 @@ export function renderInviteEmail(inviterName: string, workspaceName: string, jo
   };
 }
 
-type Mailer = {
+export type Mailer = {
   send(message: {
     to: string;
     from: { email: string; name: string };

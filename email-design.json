@@ -4,7 +4,16 @@
   "paper": "#f7f5f0",
   "ink": "#141416",
   "accent": "#141416",
-  "senders": ["packages/auth/src/index.ts", "packages/auth/src/email-template.ts", "apps/web/src/lib/email.ts"],
-  "tests": ["packages/auth/src/email-design.test.ts", "apps/web/src/lib/email.test.ts"],
+  "senders": [
+    "packages/auth/src/index.ts",
+    "packages/auth/src/email-template.ts",
+    "apps/web/src/lib/email.ts",
+    "apps/web/src/routes/api/email-test.ts"
+  ],
+  "tests": [
+    "packages/auth/src/email-design.test.ts",
+    "apps/web/src/lib/email.test.ts",
+    "apps/web/src/lib/email-test-route.test.ts"
+  ],
   "command": ["bun", "run", "test:email-design"]
 }
