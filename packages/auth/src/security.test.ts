@@ -61,6 +61,7 @@ beforeEach(async () => {
   testEnv.DB_LOCAL = await freshDb();
   mailer.sent = [];
   mailer.fail = false;
+  testEnv.EMAIL = mailer as unknown as undefined;
   clientIp = `203.0.113.${++ipCounter}`;
   ({ createAuth } = await import("./index"));
 });
@@ -96,6 +97,22 @@ async function signUp(auth: Auth) {
 }
 
 describe("email delivery failures reach the HTTP caller", () => {
+  it("missing production email binding fails reset and magic-link requests without printing secrets", async () => {
+    await signUp(createAuth());
+    testEnv.EMAIL = undefined;
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      expect(
+        (await post(createAuth(), "/request-password-reset", { email: USER.email, redirectTo: "/reset" })).status,
+      ).toBe(503);
+      expect((await post(createAuth(), "/sign-in/magic-link", { email: USER.email, callbackURL: "/" })).status).toBe(
+        503,
+      );
+      expect(JSON.stringify(log.mock.calls)).not.toMatch(/first@example|token=|reset-password\//);
+    } finally {
+      log.mockRestore();
+    }
+  });
   it("password reset request returns a generic 503 when the mailer fails", async () => {
     const auth = createAuth();
     await signUp(auth);

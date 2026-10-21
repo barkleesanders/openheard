@@ -8,6 +8,7 @@ import { APIError, createAuthMiddleware } from "better-auth/api";
 import { magicLink } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { eq } from "drizzle-orm";
+import { DEFAULT_EMAIL_FROM, deliverEmail, emailSender, type Mailer } from "./email-delivery";
 import { magicLinkEmail, passwordResetEmail } from "./email-template";
 
 type KV = {
@@ -55,23 +56,12 @@ function createKvSecondaryStorage(store: KV): SecondaryStorage {
 // Cloudflare Email Sending binding (alchemy.run.ts `Cloudflare.Email.SendEmail`).
 // Sending from a domain the account has not enabled for Email Sending fails,
 // so self-hosters set AUTH_EMAIL_FROM to an address on an enabled (sub)domain.
-type AuthMailer = {
-  send(message: {
-    to: string;
-    from: { email: string; name: string };
-    subject: string;
-    html: string;
-    text: string;
-  }): Promise<unknown>;
-};
+type AuthMailer = Mailer;
 
-export const DEFAULT_AUTH_FROM = { email: "hello@openheard.com", name: "openheard" };
+export const DEFAULT_AUTH_FROM = DEFAULT_EMAIL_FROM;
 
 function authFrom(): { email: string; name: string } {
-  const e = env as unknown as { AUTH_EMAIL_FROM?: string; AUTH_EMAIL_FROM_NAME?: string };
-  const email = e.AUTH_EMAIL_FROM?.trim();
-  if (!email) return DEFAULT_AUTH_FROM;
-  return { email, name: e.AUTH_EMAIL_FROM_NAME?.trim() || DEFAULT_AUTH_FROM.name };
+  return emailSender(env);
 }
 
 export type AuthEmailFlow = "reset_password" | "magic_link";
@@ -94,30 +84,27 @@ export class AuthEmailDeliveryError extends APIError {
 // error therefore never reaches the HTTP caller on its own: the sender records
 // the failure here and the `hooks.after` middleware converts it into a
 // generic, retryable 503 before any success or session signal leaves.
-export function createAuthEmailDelivery(mailer: AuthMailer | undefined, from: { email: string; name: string }) {
+export function createAuthEmailDelivery(
+  mailer: AuthMailer | undefined,
+  from: { email: string; name: string },
+  options: { localPreview?: boolean } = {},
+) {
   let failed = false;
 
   async function send(flow: AuthEmailFlow, to: string, subject: string, html: string, text: string) {
-    if (!mailer) {
+    if (!mailer && options.localPreview) {
       // Local development has no Email binding: print the link/code so the
       // flow can be completed from the terminal.
       console.log(`[auth] ${subject} → ${to}\n  ${text.replace(/\n/g, "\n  ")}`);
       return;
     }
     try {
-      const result = (await mailer.send({ to, from, subject, html, text })) as
-        | { messageId?: string; success?: boolean; error?: unknown }
-        | null
-        | undefined;
-      if (result && (result.success === false || result.error)) {
-        throw new Error("mailer reported failure");
-      }
+      const result = await deliverEmail(mailer, { to, from, subject, html, text });
       // Structured and PII-free: never the address, the link or the code.
       console.log(JSON.stringify({ event: "auth_email", flow, ok: true, messageId: result?.messageId ?? null }));
-    } catch (err) {
+    } catch {
       failed = true;
-      const message = err instanceof Error ? err.message : String(err);
-      console.error(JSON.stringify({ event: "auth_email", flow, ok: false, error: message.slice(0, 200) }));
+      console.error(JSON.stringify({ event: "auth_email", flow, ok: false, error: "delivery_unconfirmed" }));
       throw new AuthEmailDeliveryError();
     }
   }
@@ -146,7 +133,9 @@ export function createAuth(opts?: { demo?: boolean }) {
 
   const kvStore = (env as unknown as { CACHE?: KV }).CACHE;
   const from = authFrom();
-  const delivery = createAuthEmailDelivery((env as unknown as { EMAIL?: AuthMailer }).EMAIL, from);
+  const delivery = createAuthEmailDelivery((env as unknown as { EMAIL?: AuthMailer }).EMAIL, from, {
+    localPreview: (env as unknown as { OPENHEARD_LOCAL?: string }).OPENHEARD_LOCAL === "1",
+  });
 
   const cookieAdvanced: NonNullable<BetterAuthOptions["advanced"]> = opts?.demo
     ? { cookiePrefix: DEMO_COOKIE_PREFIX }

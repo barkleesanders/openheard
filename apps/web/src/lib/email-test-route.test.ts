@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({
   user: { role: "admin" } as { role: string } | null,
-  send: vi.fn(async (_message: unknown) => ({ messageId: "test-message" })),
+  send: vi.fn(async (_message: unknown): Promise<unknown> => ({ messageId: "test-message" })),
 }));
 vi.mock("./session", () => ({ getSessionContext: async () => ({ user: state.user }) }));
 vi.mock("@openheard/env/server", () => ({
@@ -83,4 +83,13 @@ describe("admin email diagnostics", () => {
       }),
     );
   });
+  it.each([undefined, { success: false, error: "private-token test@example.test" }])(
+    "does not report success for an invalid provider acknowledgement",
+    async (result) => {
+      state.send.mockResolvedValueOnce(result);
+      const response = await call("POST", "https://feedback.example.test");
+      expect(response.status).toBe(502);
+      expect(await response.text()).not.toMatch(/private-token|test@example/);
+    },
+  );
 });

@@ -1,3 +1,4 @@
+import { deliverEmail, emailSender } from "@openheard/auth/email-delivery";
 import { editorialEmailHtml, editorialEmailText } from "@openheard/auth/email-template";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
@@ -74,9 +75,9 @@ export const Route = createFileRoute("/api/email-test")({
           paragraphs: ["This message verifies the feedback board's email sending configuration."],
         };
         try {
-          await env.EMAIL.send({
+          await deliverEmail(env.EMAIL, {
             to,
-            from: { email: env.AUTH_EMAIL_FROM || "hello@openheard.com", name: brand },
+            from: emailSender(env),
             subject: "Feedback board email test",
             text: editorialEmailText(message),
             html: editorialEmailHtml(message),
