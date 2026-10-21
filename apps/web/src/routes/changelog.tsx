@@ -56,7 +56,7 @@ function ChangelogPage() {
           Post idea
         </Button>
       )}
-      {entries.length > 0 ? (
+      {root.workspace.id !== "demo" ? (
         <section className="flex flex-col gap-2.5 px-2.5">
           <RailLabel>Get updates</RailLabel>
           <p className="-mt-1 text-[13px] leading-[1.5] text-muted-foreground">
@@ -213,7 +213,9 @@ function EntryDialog({ entry, onClose }: { entry: Entry | null | "new"; onClose:
       <DialogContent className="max-w-2xl rounded-xl border-input bg-card">
         <DialogHeader>
           <DialogTitle>{e ? "Edit entry" : "New changelog entry"}</DialogTitle>
-          <DialogDescription>Publishing marks every linked post as shipped and notifies its voters.</DialogDescription>
+          <DialogDescription>
+            Publishing marks every linked post as shipped and queues updates for confirmed subscribers.
+          </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-[minmax(0,1fr)_120px] gap-2">
           <Input

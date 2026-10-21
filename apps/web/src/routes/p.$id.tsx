@@ -170,7 +170,9 @@ function PostPage() {
           copiedLabel="Copied!"
         />
       </div>
-      {!p.mergedInto && current.kind !== "review" ? (
+      {root.workspace.id !== "demo" &&
+      !p.mergedInto &&
+      (!root.workspace.requireApproval || current.kind !== "review") ? (
         <section className="flex flex-col gap-2 px-2.5">
           <RailLabel>Follow this request</RailLabel>
           <p className="text-xs leading-relaxed text-muted-foreground">

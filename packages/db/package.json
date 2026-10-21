@@ -12,7 +12,7 @@
   "scripts": {
     "db:generate": "drizzle-kit generate && cp src/migrations/*.sql migrations/",
     "db:migrate:deploy": "drizzle-kit migrate",
-    "db:push:local": "drizzle-kit push --config drizzle.local.config.ts",
+    "db:push:local": "drizzle-kit push --config drizzle.local.config.ts && node scripts/notification-triggers.mjs",
     "db:studio:local": "drizzle-kit studio --config drizzle.local.config.ts"
   },
   "dependencies": {

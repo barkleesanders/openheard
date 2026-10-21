@@ -310,12 +310,12 @@ export function Agents() {
             <AnimatedSpan delay={4100} className="text-muted-foreground">
               ● Draft: “Dark mode for the widget, merge without losing votes, Slack status alerts.”
             </AnimatedSpan>
-            <TypingAnimation delay={4800}>› Looks good. Publish and notify voters.</TypingAnimation>
+            <TypingAnimation delay={4800}>› Looks good. Publish and notify subscribers.</TypingAnimation>
             <AnimatedSpan delay={6400} className="pl-4 text-status-shipped">
-              └ openheard.publishChangelog → published, 128 voters notified
+              └ openheard.publishChangelog → published, subscriber updates queued
             </AnimatedSpan>
             <AnimatedSpan delay={7000} className="text-muted-foreground">
-              ● Done. Live at acme.openheard.com/changelog/this-week
+              ● Done. Live at acme.openheard.com/changelog
             </AnimatedSpan>
           </Terminal>
         </div>

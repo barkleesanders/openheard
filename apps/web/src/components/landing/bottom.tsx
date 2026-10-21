@@ -197,7 +197,7 @@ export function Bento() {
             </div>
             <div className="mt-4 flex items-center gap-2 border-t border-border pt-3 font-mono text-[12px] text-status-shipped">
               <PaperPlaneTiltIcon className="size-3.5" />
-              Published · 128 voters notified
+              Published · subscriber updates queued
             </div>
           </div>
         </Cell>

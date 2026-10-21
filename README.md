@@ -99,6 +99,12 @@ bun run dev:local       # http://localhost:3001
 bun run db:seed         # optional demo posts
 ```
 
+`db:push:local` also installs the canonical notification triggers. It preserves
+existing content and does not backfill old events. Local development has no email
+sender; the subscription screens report that limitation. The email tests capture
+messages without sending real mail. Deployed instances drain new notifications
+each minute and keep the demo reset at 04:00 UTC.
+
 Keyboard on the board: `j` `k` move, `v` vote, `enter` open, `/` search,
 `c` new post.
 
