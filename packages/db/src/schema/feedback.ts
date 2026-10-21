@@ -96,7 +96,7 @@ export const board = sqliteTable("board", {
   workspaceId: text("workspace_id")
     .notNull()
     .default("default")
-    .references(() => workspace.id, { onDelete: "cascade" }),
+    .references(() => workspace.id, { onDelete: "no action" }),
   name: text("name").notNull(),
   description: text("description"),
   position: integer("position").notNull().default(0),
@@ -108,7 +108,7 @@ export const tag = sqliteTable("tag", {
   workspaceId: text("workspace_id")
     .notNull()
     .default("default")
-    .references(() => workspace.id, { onDelete: "cascade" }),
+    .references(() => workspace.id, { onDelete: "no action" }),
   name: text("name").notNull(),
 });
 
@@ -119,7 +119,7 @@ export const post = sqliteTable(
     workspaceId: text("workspace_id")
       .notNull()
       .default("default")
-      .references(() => workspace.id, { onDelete: "cascade" }),
+      .references(() => workspace.id, { onDelete: "no action" }),
     boardId: text("board_id")
       .notNull()
       .references(() => board.id, { onDelete: "cascade" }),
@@ -241,7 +241,7 @@ export const changelogEntry = sqliteTable("changelog_entry", {
   workspaceId: text("workspace_id")
     .notNull()
     .default("default")
-    .references(() => workspace.id, { onDelete: "cascade" }),
+    .references(() => workspace.id, { onDelete: "no action" }),
   title: text("title").notNull(),
   body: text("body").notNull().default(""),
   version: text("version"),

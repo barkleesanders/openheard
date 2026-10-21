@@ -107,6 +107,14 @@ async function plan(db: Db, event: Event, now: Date) {
       .where(eq(notificationEvent.id, event.id));
     return;
   }
+  const memberPreference =
+    event.kind === "post"
+      ? eq(membership.notifyNewPost, true)
+      : event.kind === "comment"
+        ? eq(membership.notifyComment, true)
+        : event.kind === "status"
+          ? eq(membership.notifyStatus, true)
+          : sql`0`;
   await db.batch([
     db
       .insert(notificationDelivery)
@@ -129,6 +137,9 @@ async function plan(db: Db, event: Event, now: Date) {
               eq(user.emailVerified, true),
               lte(membership.createdAt, event.createdAt),
               ne(sql`trim(${user.email})`, ""),
+              memberPreference,
+              context.publiclyVisible ? undefined : eq(membership.role, "admin"),
+              event.actorId ? ne(membership.userId, event.actorId) : undefined,
             ),
           ),
       )
@@ -153,6 +164,7 @@ async function plan(db: Db, event: Event, now: Date) {
               lte(notificationSubscription.confirmedAt, event.createdAt),
               isNull(notificationSubscription.unsubscribedAt),
               subscriptionScope(db, event, context),
+              context.publiclyVisible ? undefined : sql`0`,
             ),
           ),
       )

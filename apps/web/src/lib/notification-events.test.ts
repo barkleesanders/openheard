@@ -2,8 +2,9 @@ import { readdirSync, readFileSync } from "node:fs";
 import { type Client, createClient } from "@libsql/client";
 import type { Db } from "@openheard/db";
 import * as schema from "@openheard/db/schema/index";
-import { getTableColumns } from "drizzle-orm";
+import { getTableColumns, is } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
+import { getTableConfig, SQLiteTable } from "drizzle-orm/sqlite-core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { saveChangelogEntry } from "./changelog-write";
 import { DEMO_WORKSPACE_ID } from "./demo";
@@ -58,6 +59,32 @@ beforeEach(async () => {
 afterEach(() => client?.close());
 
 describe("durable notification event capture", () => {
+  it("keeps every typed foreign key consistent with the canonical migration database", async () => {
+    const mismatches: unknown[] = [];
+    for (const table of Object.values(schema).filter((value) => is(value, SQLiteTable))) {
+      const config = getTableConfig(table);
+      const actual = (await client.execute(`PRAGMA foreign_key_list("${config.name}")`)).rows;
+      const expected = config.foreignKeys.flatMap((foreignKey) => {
+        const ref = foreignKey.reference();
+        return ref.columns.map((column, index) => ({
+          from: column.name,
+          table: getTableConfig(ref.foreignTable).name,
+          to: ref.foreignColumns[index].name,
+          on_delete: (foreignKey.onDelete ?? "no action").toUpperCase(),
+        }));
+      });
+      const comparable = actual.map((row) => ({
+        from: row.from,
+        table: row.table,
+        to: row.to,
+        on_delete: row.on_delete,
+      }));
+      const sorted = (rows: unknown[]) => rows.map((row) => JSON.stringify(row)).sort();
+      if (JSON.stringify(sorted(comparable)) !== JSON.stringify(sorted(expected)))
+        mismatches.push({ table: config.name, actual: comparable, expected });
+    }
+    expect(mismatches).toEqual([]);
+  });
   it("keeps the typed schema aligned with the canonical deployed migration", async () => {
     for (const [name, table] of [
       ["notification_event", schema.notificationEvent],

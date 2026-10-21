@@ -80,6 +80,15 @@ beforeEach(async () => {
 afterEach(() => client.close());
 
 describe("durable notification dispatch", () => {
+  it("does not let opted-out members delay an eligible subscriber", async () => {
+    for (const name of ["a-disabled", "b-disabled", "c-disabled", "d-disabled"])
+      await member(name, `UPDATE membership SET notify_status=0 WHERE user_id='${name}'`);
+    await subscription("eligible-fixture", "z-subscriber@example.test");
+    await event();
+    expect((await dispatchNotifications(db, config)).accepted).toBe(1);
+    expect(sent.map((message) => message.to)).toEqual(["z-subscriber@example.test"]);
+    expect(await db.select().from(schema.notificationDelivery)).toHaveLength(1);
+  });
   it("deduplicates member/subscription overlap, stores provider acceptance, and does not resend", async () => {
     await member("person");
     await subscription("fixture-subscription", "person@example.test");
