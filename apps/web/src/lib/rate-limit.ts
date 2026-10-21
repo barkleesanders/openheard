@@ -35,7 +35,7 @@ const DEFAULT_MAX = 60;
 export async function rateLimit(
   key: string,
   opts?: { window?: number; max?: number; failClosed?: boolean },
-): Promise<{ allowed: boolean; retryAfter: number | null }> {
+): Promise<{ allowed: true; retryAfter: null } | { allowed: false; retryAfter: number }> {
   const store = getStore();
   const window = opts?.window ?? DEFAULT_WINDOW;
   const max = opts?.max ?? DEFAULT_MAX;

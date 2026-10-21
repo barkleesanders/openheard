@@ -29,8 +29,8 @@ export function Nav() {
   const root = useLoaderData({ from: "__root__" });
   const own = (root as { ownWorkspaces?: { id: string; name: string }[] }).ownWorkspaces;
   const ctaHref = useMemo(() => {
-    if (root?.user && own && own.length > 0)
-      return workspaceUrl(own[own.length - 1]!.id, root.rootDomain, "/dashboard");
+    const latest = own?.at(-1);
+    if (root?.user && latest) return workspaceUrl(latest.id, root.rootDomain, "/dashboard");
     if (root?.user) return "/new";
     return "/start";
   }, [root, own]);

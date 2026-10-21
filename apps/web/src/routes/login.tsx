@@ -17,10 +17,12 @@ export const Route = createFileRoute("/login")({
   beforeLoad: async ({ search }) => {
     const [user, root] = await Promise.all([getUser(), getWorkspace()]);
     if (!user) return;
-    if ((search as Search).redirect) throw redirect({ to: (search as Search).redirect! });
+    const destination = (search as Search).redirect;
+    if (destination) throw redirect({ to: destination });
     if (!root.marketing) throw redirect({ to: "/" });
     const own = (await myWorkspaces()).filter((w) => w.id !== "default");
-    if (own.length > 0) throw redirect({ href: workspaceUrl(own[own.length - 1]!.id, root.rootDomain, "/dashboard") });
+    const latest = own.at(-1);
+    if (latest) throw redirect({ href: workspaceUrl(latest.id, root.rootDomain, "/dashboard") });
     throw redirect({ to: "/new" });
   },
   loader: () => getWorkspaceMemberCount(),

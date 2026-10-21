@@ -58,7 +58,7 @@ export function WorkspaceForm({
   const normalizedWebsite = website.trim()
     ? /^https?:\/\//i.test(website.trim())
       ? website.trim()
-      : "https://" + website.trim()
+      : `https://${website.trim()}`
     : "";
   const websiteValid = /^https?:\/\/[^\s.]+\.[^\s]+$/.test(normalizedWebsite);
   const nameValid = name.trim().length >= 2;

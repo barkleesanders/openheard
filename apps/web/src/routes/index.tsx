@@ -93,7 +93,10 @@ function BoardPage() {
   }, [router, posts]);
 
   const [focused, setFocused] = useKeyNav(posts.length, {
-    open: (i) => navigate({ to: "/p/$id", params: { id: String(posts[i]!.id) } }),
+    open: (i) => {
+      const post = posts[i];
+      if (post) navigate({ to: "/p/$id", params: { id: String(post.id) } });
+    },
     vote: (i) => document.querySelector<HTMLButtonElement>(`[data-row-index="${i}"] [data-vote]`)?.click(),
     search: () => document.querySelector<HTMLInputElement>("header input")?.focus(),
     create: tryCompose,

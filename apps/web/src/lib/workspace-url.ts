@@ -4,7 +4,7 @@ export function workspaceUrl(slug: string, rootDomain: string | null, path = "/"
   if (!rootDomain || slug === "default") return path;
   if (typeof window !== "undefined") {
     const { protocol, port } = window.location;
-    return `${protocol}//${slug}.${rootDomain}${port ? ":" + port : ""}${path}`;
+    return `${protocol}//${slug}.${rootDomain}${port ? `:${port}` : ""}${path}`;
   }
   const protocol = rootDomain === "localhost" ? "http:" : "https:";
   return `${protocol}//${slug}.${rootDomain}${path}`;

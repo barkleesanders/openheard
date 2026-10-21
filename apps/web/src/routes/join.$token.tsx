@@ -31,8 +31,8 @@ function JoinPage() {
       setTimeout(() => {
         router.navigate({ to: "/" });
       }, 1500);
-    } catch (e: any) {
-      setError(e.message ?? "Failed to accept invite");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to accept invite");
     }
     setBusy(false);
   }

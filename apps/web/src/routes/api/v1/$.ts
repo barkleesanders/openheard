@@ -128,7 +128,7 @@ async function handleRequest(request: Request, params: Record<string, string>): 
     const auth = request.headers.get("authorization");
     const key = auth?.startsWith("Bearer ") ? auth.slice(7, 20) : ip;
     const rl = await rateLimit(`api:${key}`, { window: 60, max: 60 });
-    if (!rl.allowed) return rateLimitResponse(rl.retryAfter!);
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfter);
 
     if (request.method === "GET") return await getRoutes(request, params);
     if (request.method === "POST") return await postRoutes(request, params);

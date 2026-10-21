@@ -275,9 +275,11 @@ function StartPage() {
                         type="button"
                         className="font-mono underline hover:text-foreground"
                         onClick={() => {
+                          const suggestion = slugStatus.suggestion;
+                          if (!suggestion) return;
                           setSlugTouched(true);
-                          setSlugInput(slugStatus.suggestion!);
-                          debouncedCheck(slugStatus.suggestion!);
+                          setSlugInput(suggestion);
+                          debouncedCheck(suggestion);
                         }}
                       >
                         {slugStatus.suggestion}

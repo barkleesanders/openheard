@@ -77,8 +77,10 @@ export const saveChangelog = createServerFn({ method: "POST" })
     } else {
       [{ id }] = await db.insert(changelogEntry).values(values).returning({ id: changelogEntry.id });
     }
+    const entryId = id;
+    if (entryId === undefined) throw new Error("Changelog entry was not saved");
     if (postIds.length) {
-      await db.insert(changelogPost).values(postIds.map((postId) => ({ entryId: id!, postId })));
+      await db.insert(changelogPost).values(postIds.map((postId) => ({ entryId, postId })));
       if (data.publish) {
         // Shipping closes the loop: linked posts move to done.
         const linked = await db

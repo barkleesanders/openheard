@@ -289,9 +289,15 @@ export async function seedDemoContent(db: Db, workspaceId: string, adminId: stri
     .values(TAGS.map((t) => ({ id: scoped(t.toLowerCase()), workspaceId: ws, name: t })))
     .onConflictDoNothing();
 
+  function memberAt(index: number): string {
+    const member = members[index % members.length];
+    if (!member) throw new Error("Demo seed requires a member account");
+    return member;
+  }
+
   let i = 0;
   for (const p of POSTS) {
-    const author = members[i % members.length]!;
+    const author = memberAt(i);
     const [row] = await db
       .insert(schema.post)
       .values({
@@ -340,7 +346,7 @@ export async function seedDemoContent(db: Db, workspaceId: string, adminId: stri
     if (i % 2 === 0) {
       await db.insert(schema.comment).values({
         postId: row.id,
-        authorId: members[(i + 1) % members.length]!,
+        authorId: memberAt(i + 1),
         body: "Same boat here. We would also want the status mapping to be editable.",
         createdAt: at(Math.max(0, p.days - 1)),
       });

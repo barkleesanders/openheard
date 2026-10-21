@@ -3,6 +3,7 @@
 // handler from ./index.ts over real HTTP Requests against a fresh in-memory
 // schema — the same code path apps/web/src/routes/api/auth/$.ts forwards to.
 
+import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { createClient } from "@libsql/client";
 import type { Db } from "@openheard/db";
@@ -136,13 +137,14 @@ describe("magic link storage", () => {
     expect(res.status).toBe(200);
     const url = new URL(mailer.sent[0]?.text.match(/https?:\/\/\S+/)?.[0] ?? "");
     const token = url.searchParams.get("token");
-    expect(token).toBeTruthy();
-    const rows = await testEnv.DB_LOCAL!.select().from(schema.verification);
+    assert(token, "Magic-link email must contain a token");
+    assert(testEnv.DB_LOCAL, "Security fixture database must be initialized");
+    const rows = await testEnv.DB_LOCAL.select().from(schema.verification);
     expect(rows.length).toBeGreaterThan(0);
     for (const row of rows) {
       expect(row.identifier).not.toBe(token);
-      expect(row.identifier).not.toContain(token!);
-      expect(row.value).not.toContain(token!);
+      expect(row.identifier).not.toContain(token);
+      expect(row.value).not.toContain(token);
     }
     const first = await get(createAuth(), `/magic-link/verify?token=${token}&callbackURL=/welcome`);
     expect([200, 302]).toContain(first.status);
@@ -173,8 +175,8 @@ describe("sessions", () => {
       cookie: `better-auth.session_token=${cookies["better-auth.session_token"]}`,
     });
     const line = res.headers.getSetCookie().find((l) => l.startsWith("better-auth.session_data="));
-    expect(line).toBeTruthy();
-    const maxAge = Number(/Max-Age=(\d+)/i.exec(line!)?.[1]);
+    assert(line, "Session response must set the cache cookie");
+    const maxAge = Number(/Max-Age=(\d+)/i.exec(line)?.[1]);
     expect(maxAge).toBeGreaterThan(0);
     expect(maxAge).toBeLessThanOrEqual(300);
   });

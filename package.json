@@ -53,6 +53,8 @@
     "dev": "bun run --filter '*' dev",
     "build": "bun run --filter '*' build",
     "check-types": "bun run --filter '*' check-types",
+    "lint": "node --test scripts/lint-gate.test.mjs && biome check --error-on-warnings",
+    "gate:quality": "bun run lint && bun run check-types && bun run --filter web test",
     "dev:web": "bun run --filter web dev:bare",
     "db:generate": "bun run --filter @openheard/db db:generate",
     "deploy": "bun run deploy:instance",
@@ -64,7 +66,7 @@
     "gate:auth-security": "vitest run --config packages/auth/vitest.config.ts",
     "gate:dependency-security": "node scripts/dependency-security.test.mjs",
     "gate:public-assets": "node --test scripts/public-assets.test.mjs && node scripts/public-assets.mjs",
-    "deploy:instance": "bun run gate:dependency-security && bun run gate:auth-security && bun run test:email-design && node --test scripts/public-assets.test.mjs && node scripts/public-assets.mjs --live-config --check-origin && cd packages/infra && bunx alchemy deploy --stage prod --yes && node ../../scripts/public-assets.mjs --live-config",
+    "deploy:instance": "bun run gate:quality && bun run gate:dependency-security && bun run gate:auth-security && bun run test:email-design && node --test scripts/public-assets.test.mjs && node scripts/public-assets.mjs --live-config --check-origin && cd packages/infra && bunx alchemy deploy --stage prod --yes && node ../../scripts/public-assets.mjs --live-config",
     "test:email-design": "vitest run --config packages/auth/vitest.config.ts src/email-design.test.ts && cd apps/web && vitest run src/lib/email.test.ts src/lib/email-test-route.test.ts"
   },
   "dependencies": {
@@ -73,6 +75,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.5.15",
     "@cloudflare/workers-types": "^5.20261019.1",
     "@libsql/client": "catalog:",
     "@openheard/auth": "workspace:*",

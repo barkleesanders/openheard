@@ -662,9 +662,9 @@ const footerCols = [
     "Open source",
     [
       ["GitHub", GITHUB],
-      ["Contributing", GITHUB + "/blob/main/CONTRIBUTING.md"],
-      ["Security", GITHUB + "/blob/main/SECURITY.md"],
-      ["Licence", GITHUB + "/blob/main/LICENSE"],
+      ["Contributing", `${GITHUB}/blob/main/CONTRIBUTING.md`],
+      ["Security", `${GITHUB}/blob/main/SECURITY.md`],
+      ["Licence", `${GITHUB}/blob/main/LICENSE`],
     ],
   ],
   [

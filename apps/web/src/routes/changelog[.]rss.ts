@@ -4,7 +4,7 @@ import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { workspaceFromRequest } from "@/lib/session";
 
 const esc = (s: string) =>
-  s.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" })[c]!);
+  s.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" })[c] ?? c);
 
 // Published changelog entries as RSS 2.0. Readers, Slack, and Zapier all eat this.
 export const Route = createFileRoute("/changelog.rss")({
@@ -23,15 +23,16 @@ export const Route = createFileRoute("/changelog.rss")({
         const origin = new URL(request.url).origin;
         const name = ws?.name ?? "openheard";
         const items = entries
-          .map(
-            (e) => `    <item>
+          .map((e) => {
+            if (!e.publishedAt) return "";
+            return `    <item>
       <title>${esc(e.version ? `${e.version} · ${e.title}` : e.title)}</title>
       <link>${origin}/changelog</link>
       <guid isPermaLink="false">changelog-${e.id}</guid>
-      <pubDate>${new Date(e.publishedAt!).toUTCString()}</pubDate>
+      <pubDate>${new Date(e.publishedAt).toUTCString()}</pubDate>
       <description>${esc(e.body)}</description>
-    </item>`,
-          )
+    </item>`;
+          })
           .join("\n");
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">

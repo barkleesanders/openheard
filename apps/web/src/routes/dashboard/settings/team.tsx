@@ -42,8 +42,8 @@ function Team() {
       setInviteEmail("");
       toast.success(`Invite sent to ${inviteEmail}`);
       router.invalidate();
-    } catch (err: any) {
-      toast.error(err.message ?? "Failed to send invite");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send invite");
     }
     setInviteBusy(false);
   }

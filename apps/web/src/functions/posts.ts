@@ -126,7 +126,7 @@ export const listPosts = createServerFn({ method: "GET" })
       posts: rows.map((r) => ({
         id: r.id,
         title: r.title,
-        excerpt: r.body.length > 180 ? r.body.slice(0, 177).trimEnd() + "…" : r.body,
+        excerpt: r.body.length > 180 ? `${r.body.slice(0, 177).trimEnd()}…` : r.body,
         status: r.status,
         pinned: r.pinned,
         voteCount: r.voteCount,
@@ -588,7 +588,7 @@ export const searchPosts = createServerFn({ method: "GET" })
     const terms = words.length ? words.slice(0, 5) : [data.q.toLowerCase()];
     const escaped = terms.map(escapeLike);
     const hits = sql.join(
-      escaped.map((w) => sql`(lower(${post.title}) like ${"%" + w + "%"} escape '\\')`),
+      escaped.map((w) => sql`(lower(${post.title}) like ${`%${w}%`} escape '\\')`),
       sql` + `,
     );
     return db

@@ -66,7 +66,7 @@ async function handle(request: Request, ctx: ExecutionContext): Promise<Response
 
     if (response.status === 200) {
       const contentLength = parseInt(response.headers.get("content-length") ?? "", 10);
-      const tooLarge = !isNaN(contentLength) && contentLength > MAX_CACHEABLE_BODY;
+      const tooLarge = !Number.isNaN(contentLength) && contentLength > MAX_CACHEABLE_BODY;
 
       if (!tooLarge) {
         const body = await response.arrayBuffer();

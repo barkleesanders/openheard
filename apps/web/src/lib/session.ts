@@ -22,8 +22,8 @@ export const rootDomain = createServerOnlyFn(async (): Promise<string | null> =>
 
 export function workspaceSlugFromHost(host: string, rootDomainValue: string | null): string {
   const root = (rootDomainValue ?? "localhost").toLowerCase();
-  const h = host.toLowerCase().split(":")[0]!;
-  if (h.endsWith("." + root)) {
+  const [h = ""] = host.toLowerCase().split(":", 1);
+  if (h.endsWith(`.${root}`)) {
     const slug = h.slice(0, -(root.length + 1));
     if (slug && !slug.includes(".") && slug !== "www" && slug !== "app") return slug;
   }
@@ -71,9 +71,9 @@ export async function workspaceSlugFromRequest(request: Request): Promise<string
 // board. Self-hosted installs have no ROOT_DOMAIN and are never marketing.
 export function isMarketingHost(host: string, rootDomainValue: string | null): boolean {
   if (!rootDomainValue || rootDomainValue === "localhost") return false;
-  const h = host.toLowerCase().split(":")[0]!;
+  const [h = ""] = host.toLowerCase().split(":", 1);
   const root = rootDomainValue.toLowerCase();
-  return h === root || h === "www." + root;
+  return h === root || h === `www.${root}`;
 }
 
 // Workspace for a raw request (sitemap, RSS, API routes that have no session middleware).

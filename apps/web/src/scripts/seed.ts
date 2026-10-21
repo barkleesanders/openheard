@@ -20,7 +20,8 @@ async function main() {
     console.log("Sign up once in the app first (that account becomes admin), then seed.");
     process.exit(1);
   }
-  const admin = users.find((u) => u.role === "admin") ?? users[0]!;
+  const admin = users.find((u) => u.role === "admin") ?? users[0];
+  if (!admin) throw new Error("No account available for local seed");
   await db.insert(schema.workspace).values({ id: "default", name: "acme" }).onConflictDoNothing();
   await db
     .insert(schema.membership)

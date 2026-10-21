@@ -175,7 +175,7 @@ async function handleMcp(request: Request): Promise<Response> {
     const auth = request.headers.get("authorization");
     const key = auth?.startsWith("Bearer ") ? auth.slice(7, 20) : ip;
     const rl = await rateLimit(`mcp:${key}`, { window: 60, max: 60 });
-    if (!rl.allowed) return rateLimitResponse(rl.retryAfter!);
+    if (!rl.allowed) return rateLimitResponse(rl.retryAfter);
 
     const ctx = await authenticateApiKey(request);
 

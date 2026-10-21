@@ -8,7 +8,7 @@ export function isPublicCacheable(pathname: string): boolean {
 }
 
 export function isPrivatePath(pathname: string): boolean {
-  return PRIVATE_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  return PRIVATE_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 export function hasSessionCookie(request: Request): boolean {

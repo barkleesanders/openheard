@@ -7,7 +7,7 @@ export function parseCsv(text: string): Record<string, string>[] {
   let quoted = false;
   const src = text.replace(/^﻿/, "");
   for (let i = 0; i < src.length; i++) {
-    const c = src[i]!;
+    const c = src.charAt(i);
     if (quoted) {
       if (c === '"') {
         if (src[i + 1] === '"') {
@@ -62,8 +62,9 @@ export type ImportRow = {
 };
 
 export function toImportRows(records: Record<string, string>[]): ImportRow[] {
-  if (records.length === 0) return [];
-  const keys = Object.keys(records[0]!);
+  const first = records[0];
+  if (!first) return [];
+  const keys = Object.keys(first);
   const pick = (names: string[]) => keys.find((k) => names.includes(k.toLowerCase()));
   const col = Object.fromEntries(Object.entries(COLS).map(([k, names]) => [k, pick(names)])) as Record<
     keyof typeof COLS,
@@ -71,7 +72,10 @@ export function toImportRows(records: Record<string, string>[]): ImportRow[] {
   >;
   return records
     .map((r) => {
-      const get = (k: keyof typeof COLS) => (col[k] ? (r[col[k]!] ?? "") : "");
+      const get = (k: keyof typeof COLS) => {
+        const column = col[k];
+        return column ? (r[column] ?? "") : "";
+      };
       const email = get("authorEmail");
       return {
         title: get("title"),

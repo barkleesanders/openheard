@@ -428,6 +428,11 @@ function Detail({ post: p, onClose, nav }: { post: PostData; onClose: () => void
 
   function send() {
     if (!reply.trim()) return;
+    const author = root.user;
+    if (!author) {
+      toast.error("Sign in to comment");
+      return;
+    }
     const body = reply.trim();
     const isInternal = internal;
     const tempId = -Date.now();
@@ -436,7 +441,7 @@ function Detail({ post: p, onClose, nav }: { post: PostData; onClose: () => void
       kind: "comment",
       body,
       internal: isInternal,
-      author: { name: root.user!.name, image: root.user!.image, role: root.user!.role },
+      author: { name: author.name, image: author.image, role: author.role },
       at: new Date().toISOString(),
       commentId: tempId,
       reactions: [],

@@ -4,7 +4,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { workspaceFromRequest } from "@/lib/session";
 
 const esc = (s: string) =>
-  s.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" })[c]!);
+  s.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" })[c] ?? c);
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {

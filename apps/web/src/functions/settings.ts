@@ -369,6 +369,7 @@ export const importPosts = createServerFn({ method: "POST" })
       let authorId: string | null = null;
       const email = r.authorEmail?.toLowerCase();
       if (email) {
+        const [emailName = ""] = email.split("@", 1);
         authorId = users.get(email) ?? null;
         if (!authorId) {
           authorId = crypto.randomUUID();
@@ -376,7 +377,7 @@ export const importPosts = createServerFn({ method: "POST" })
             .insert(user)
             .values({
               id: authorId,
-              name: r.authorName || email.split("@")[0]!,
+              name: r.authorName || emailName,
               email,
               emailVerified: false,
               role: "member",
@@ -387,9 +388,10 @@ export const importPosts = createServerFn({ method: "POST" })
       }
       // Status: match words, fall back to open.
       let statusKey = openKey;
-      if (r.status) {
-        const exact = statuses.find((s) => s.label.toLowerCase() === r.status!.toLowerCase());
-        const kind = STATUS_WORDS.find(([re]) => re.test(r.status!))?.[1];
+      const importedStatus = r.status;
+      if (importedStatus) {
+        const exact = statuses.find((s) => s.label.toLowerCase() === importedStatus.toLowerCase());
+        const kind = STATUS_WORDS.find(([re]) => re.test(importedStatus))?.[1];
         statusKey = exact?.key ?? (kind ? (byKind(kind) ?? openKey) : openKey);
       }
       const createdAt = r.createdAt && !Number.isNaN(Date.parse(r.createdAt)) ? new Date(r.createdAt) : new Date();

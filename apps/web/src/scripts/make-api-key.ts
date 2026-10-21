@@ -39,7 +39,7 @@ async function main() {
   console.log(`\nAPI key created for workspace "${ws}":\n`);
   console.log(`  ${key}\n`);
   console.log("Save this — it cannot be retrieved again.");
-  console.log("Use it as: Authorization: Bearer " + key);
+  console.log(`Use it as: Authorization: Bearer ${key}`);
 }
 
 main();

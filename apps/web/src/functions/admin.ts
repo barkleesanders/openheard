@@ -235,7 +235,7 @@ export const listInbox = createServerFn({ method: "GET" })
       ...r,
       tags: r.tags.map((t) => t.tag),
       trending: hot.has(r.id),
-      excerpt: r.body.length > 120 ? r.body.slice(0, 117).trimEnd() + "…" : r.body,
+      excerpt: r.body.length > 120 ? `${r.body.slice(0, 117).trimEnd()}…` : r.body,
       body: undefined,
     }));
   });

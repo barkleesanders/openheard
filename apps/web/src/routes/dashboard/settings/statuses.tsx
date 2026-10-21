@@ -44,8 +44,11 @@ function Statuses() {
     const keys = root.statuses.map((s) => s.key);
     const i = keys.indexOf(key);
     const j = i + dir;
-    if (j < 0 || j >= keys.length) return;
-    [keys[i], keys[j]] = [keys[j]!, keys[i]!];
+    if (i < 0 || j < 0 || j >= keys.length) return;
+    const from = keys[i];
+    const into = keys[j];
+    if (from === undefined || into === undefined) return;
+    [keys[i], keys[j]] = [into, from];
     fire(() => reorderStatuses({ data: { keys } }));
   }
 

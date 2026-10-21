@@ -96,8 +96,8 @@ describe("global id collisions", () => {
       });
 
     const [after] = await db.select().from(schema.tag).where(eq(schema.tag.id, id));
-    expect(after!.name).toBe("Demo private");
-    expect(after!.workspaceId).toBe("default");
+    expect(after?.name).toBe("Demo private");
+    expect(after?.workspaceId).toBe("default");
   });
 
   it("the seed refuses to adopt a board another workspace owns", async () => {
@@ -113,8 +113,8 @@ describe("global id collisions", () => {
       .select()
       .from(schema.board)
       .where(eq(schema.board.id, scopedId(DEMO_WORKSPACE_ID, "features")));
-    expect(board!.workspaceId).toBe("default");
-    expect(board!.name).toBe("Squatter");
+    expect(board?.workspaceId).toBe("default");
+    expect(board?.name).toBe("Squatter");
   });
 });
 

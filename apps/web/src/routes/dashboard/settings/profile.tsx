@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Row, SectionHead } from "@/components/admin/panel";
 import { Avatar } from "@/components/bits";
 import { saveProfile } from "@/functions/settings";
+import { requireUser } from "@/lib/session";
 import { PageHead } from "@/routes/dashboard/settings";
 
 export const Route = createFileRoute("/dashboard/settings/profile")({
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/dashboard/settings/profile")({
 function Profile() {
   const root = useLoaderData({ from: "__root__" });
   const router = useRouter();
-  const me = root.user!;
+  const me = requireUser(root.user);
   const [name, setName] = useState(me.name);
   const dirty = name.trim() !== me.name;
 

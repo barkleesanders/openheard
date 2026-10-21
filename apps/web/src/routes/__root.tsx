@@ -14,7 +14,7 @@ import { SignInDialog } from "../components/sign-in-dialog";
 import { getWorkspace } from "../functions/workspace";
 import appCss from "../index.css?url";
 
-export type RouterAppContext = {};
+export type RouterAppContext = { user: null };
 
 const VITE_ENV = (import.meta as { env?: Record<string, string | undefined> }).env ?? {};
 const OPENPANEL_CLIENT_ID = VITE_ENV.VITE_OPENPANEL_CLIENT_ID;

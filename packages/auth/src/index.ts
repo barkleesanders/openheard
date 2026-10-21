@@ -151,7 +151,7 @@ export function createAuth(opts?: { demo?: boolean }) {
   const cookieAdvanced: NonNullable<BetterAuthOptions["advanced"]> = opts?.demo
     ? { cookiePrefix: DEMO_COOKIE_PREFIX }
     : rootDomain
-      ? { crossSubDomainCookies: { enabled: true, domain: "." + rootDomain } }
+      ? { crossSubDomainCookies: { enabled: true, domain: `.${rootDomain}` } }
       : {};
 
   return betterAuth({

@@ -66,7 +66,7 @@ describe("resetDemoWorkspace", () => {
     await resetDemoWorkspace(db);
 
     expect(await db.select().from(schema.post).where(eq(schema.post.workspaceId, "acme"))).toHaveLength(1);
-    expect((await db.select().from(schema.post).where(eq(schema.post.id, postId)))[0]!.authorId).toBe("acme-owner");
+    expect((await db.select().from(schema.post).where(eq(schema.post.id, postId)))[0]?.authorId).toBe("acme-owner");
     expect(await db.select().from(schema.board).where(eq(schema.board.workspaceId, "acme"))).toHaveLength(1);
     expect(await db.select().from(schema.tag).where(eq(schema.tag.workspaceId, "acme"))).toHaveLength(1);
     expect(
@@ -87,10 +87,10 @@ describe("resetDemoWorkspace", () => {
     await resetDemoWorkspace(db);
 
     const [ws] = await db.select().from(schema.workspace).where(eq(schema.workspace.id, DEMO_WORKSPACE_ID));
-    expect(ws!.anonymousVoting).toBe(true);
-    expect(ws!.whoCanPost).toBe("anyone");
-    expect(ws!.name).toBe("Acme");
-    expect((await db.select().from(schema.user).where(eq(schema.user.id, DEMO_ADMIN_ID)))[0]!.name).toBe("Demo admin");
+    expect(ws?.anonymousVoting).toBe(true);
+    expect(ws?.whoCanPost).toBe("anyone");
+    expect(ws?.name).toBe("Acme");
+    expect((await db.select().from(schema.user).where(eq(schema.user.id, DEMO_ADMIN_ID)))[0]?.name).toBe("Demo admin");
     expect(
       await db
         .select()

@@ -204,7 +204,7 @@ function Editor({ entry, onClose }: { entry: Entry | null; onClose: () => void }
                 published ? "bg-status-shipped/15 text-status-shipped" : "bg-status-planned/15 text-status-planned",
               )}
             >
-              {published ? `Published ${ago(entry!.publishedAt!)} ago` : "Draft"}
+              {entry?.publishedAt ? `Published ${ago(entry.publishedAt)} ago` : "Draft"}
             </span>
           </div>
           <div className="flex items-center gap-1.5">
