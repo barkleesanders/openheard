@@ -1,0 +1,15 @@
+diff --git a/lib/parse.js b/lib/parse.js
+index 3a6988e629f52aee6609dc5ec290a5e9ff47cecb..9a1a159b8e132d029a4f104762f0da3da32dd11c 100644
+--- a/lib/parse.js
++++ b/lib/parse.js
+@@ -196,6 +196,10 @@ const parse = (input, options = {}) => {
+ 
+     if (value === CHAR_LEFT_CURLY_BRACE) {
+       depth++;
++      // Bound the AST before compile/expand recursively walk it.
++      if (depth > 100) {
++        throw new SyntaxError('Brace nesting exceeds maximum depth (100)');
++      }
+ 
+       const dollar = prev.value && prev.value.slice(-1) === '$' || block.dollar === true;
+       const brace = {
