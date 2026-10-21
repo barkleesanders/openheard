@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { check, index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 import { user } from "./auth";
 
@@ -367,3 +367,60 @@ export const changelogPostRelations = relations(changelogPost, ({ one }) => ({
   entry: one(changelogEntry, { fields: [changelogPost.entryId], references: [changelogEntry.id] }),
   post: one(post, { fields: [changelogPost.postId], references: [post.id] }),
 }));
+
+// Durable events are inserted by the canonical 0011 migration's SQLite triggers,
+// atomically with mutations from the browser, HTTP API and MCP. No mail is sent
+// by a trigger. Recipient consent is evaluated by the delivery worker.
+export const notificationEvent = sqliteTable(
+  "notification_event",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspace.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: ["post", "comment", "status", "changelog"] }).notNull(),
+    sourceKey: text("source_key").notNull(),
+    entityId: integer("entity_id").notNull(),
+    actorId: text("actor_id").references(() => user.id, { onDelete: "set null" }),
+    payload: text("payload").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+    plannedAt: integer("planned_at", { mode: "timestamp_ms" }),
+    completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+  },
+  (t) => [
+    uniqueIndex("notification_event_source_idx").on(t.kind, t.sourceKey),
+    index("notification_event_pending_idx").on(t.plannedAt, t.id),
+    index("notification_event_workspace_idx").on(t.workspaceId, t.id),
+    check("notification_event_kind", sql`${t.kind} IN ('post', 'comment', 'status', 'changelog')`),
+    check("notification_event_payload", sql`json_valid(${t.payload})`),
+  ],
+);
+
+export const notificationDelivery = sqliteTable(
+  "notification_delivery",
+  {
+    eventId: integer("event_id")
+      .notNull()
+      .references(() => notificationEvent.id, { onDelete: "cascade" }),
+    recipientKey: text("recipient_key").notNull(),
+    state: text("state", { enum: ["queued", "sending", "accepted", "skipped", "unconfirmed"] })
+      .notNull()
+      .default("queued"),
+    attemptedAt: integer("attempted_at", { mode: "timestamp_ms" }),
+    acceptedAt: integer("accepted_at", { mode: "timestamp_ms" }),
+    providerMessageId: text("provider_message_id"),
+    lastError: text("last_error"),
+  },
+  (t) => [
+    primaryKey({ columns: [t.eventId, t.recipientKey] }),
+    index("notification_delivery_pending_idx").on(t.state, t.eventId),
+    check(
+      "notification_delivery_state",
+      sql`${t.state} IN ('queued', 'sending', 'accepted', 'skipped', 'unconfirmed')`,
+    ),
+    check(
+      "notification_delivery_acceptance",
+      sql`${t.state} != 'accepted' OR (${t.acceptedAt} IS NOT NULL AND ${t.providerMessageId} IS NOT NULL AND length(trim(${t.providerMessageId})) > 0)`,
+    ),
+  ],
+);
