@@ -18,6 +18,7 @@ import { Avatar } from "@/components/bits";
 import { DashboardErrorState, DashboardPanelSkeleton } from "@/components/states";
 import { deleteChangelog, listChangelog, saveChangelog } from "@/functions/changelog";
 import { searchPosts } from "@/functions/posts";
+import { focusInputOnMount } from "@/lib/focus-input";
 import { ago, fullDate } from "@/lib/time";
 
 type Entry = Awaited<ReturnType<typeof listChangelog>>[number];
@@ -301,7 +302,7 @@ function Editor({ entry, onClose }: { entry: Entry | null; onClose: () => void }
                 {linking ? (
                   <div className="relative">
                     <input
-                      ref={(input) => input?.focus({ preventScroll: true })}
+                      ref={focusInputOnMount}
                       value={q}
                       onChange={(e) => setQ(e.target.value)}
                       onBlur={() => setTimeout(() => setLinking(false), 150)}

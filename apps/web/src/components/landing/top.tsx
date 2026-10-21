@@ -142,11 +142,7 @@ export function Nav() {
                     <li key={n.label} className="border-b border-border p-2.5 last:border-b-0">
                       <a
                         href={n.href}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          document.getElementById(n.href.substring(1))?.scrollIntoView({ behavior: "smooth" });
-                          setDrawerOpen(false);
-                        }}
+                        onClick={() => setDrawerOpen(false)}
                         className="text-muted-foreground transition-colors hover:text-foreground"
                       >
                         {n.label}

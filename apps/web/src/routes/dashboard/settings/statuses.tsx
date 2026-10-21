@@ -14,6 +14,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { SectionHead, Toggle } from "@/components/admin/panel";
 import { deleteStatus, reorderStatuses, saveStatus } from "@/functions/statuses";
+import { focusInputOnMount } from "@/lib/focus-input";
 import type { StatusInfo } from "@/lib/status";
 import { KIND_LABEL } from "@/lib/status";
 import { PageHead } from "@/routes/dashboard/settings";
@@ -141,7 +142,7 @@ function StatusRow({
       >
         <div className="flex items-center gap-2">
           <input
-            ref={(input) => input?.focus({ preventScroll: true })}
+            ref={focusInputOnMount}
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="Label"

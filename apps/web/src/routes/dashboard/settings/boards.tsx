@@ -11,6 +11,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { SectionHead } from "@/components/admin/panel";
 import { deleteBoard, deleteTag, saveBoard, saveTag } from "@/functions/settings";
+import { focusInputOnMount } from "@/lib/focus-input";
 import { PageHead } from "@/routes/dashboard/settings";
 
 export const Route = createFileRoute("/dashboard/settings/boards")({
@@ -71,7 +72,7 @@ function Boards() {
           }}
         >
           <input
-            ref={(input) => input?.focus({ preventScroll: true })}
+            ref={focusInputOnMount}
             placeholder="Board name"
             value={newBoard.name}
             onChange={(e) => setNewBoard({ ...newBoard, name: e.target.value })}
@@ -124,7 +125,7 @@ function Boards() {
           }}
         >
           <input
-            ref={(input) => input?.focus({ preventScroll: true })}
+            ref={focusInputOnMount}
             placeholder="Tag name"
             value={newTag}
             onChange={(e) => setNewTag(e.target.value)}
@@ -165,7 +166,7 @@ function BoardRow({
         }}
       >
         <input
-          ref={(input) => input?.focus({ preventScroll: true })}
+          ref={focusInputOnMount}
           value={name}
           onChange={(e) => setName(e.target.value)}
           className={`${input} w-48`}
