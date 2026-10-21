@@ -8,7 +8,7 @@
     "dev:bare": "vite dev",
     "seed": "bun run src/scripts/seed.ts",
     "demo:reset": "bun run src/scripts/demo-reset.ts",
-    "check-types": "tsc --noEmit",
+    "check-types": "bun run ../../scripts/generate-routes.mjs && tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
@@ -45,6 +45,7 @@
   "devDependencies": {
     "@openheard/config": "workspace:*",
     "@tanstack/react-router-devtools": "^1.167.0",
+    "@tanstack/router-generator": "1.167.45",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/react": "catalog:",
