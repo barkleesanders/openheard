@@ -92,10 +92,10 @@ function AdminLayout() {
       >
         <ListIcon className="size-5" />
       </button>
-      <div className="flex min-w-0 flex-1 flex-col">
+      <main id="main-content" className="flex min-w-0 flex-1 flex-col">
         {isDemo(root.workspace) ? <DemoBanner /> : null}
         <Outlet />
-      </div>
+      </main>
       <NewPostDialog open={composing} onOpenChange={setComposing} boards={root.boards} signedIn={!!root.user} />
     </div>
   );

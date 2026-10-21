@@ -11,6 +11,9 @@ export const Route = createFileRoute("/dashboard/settings")({
   // function that would throw.
   loader: async ({ parentMatchPromise, location }) => {
     const parent = await parentMatchPromise;
+    if (location.pathname === "/dashboard/settings") {
+      throw redirect({ to: "/dashboard/settings/general" });
+    }
     if (!parent.loaderData?.demo) return;
     if (DEMO_HIDDEN_SETTINGS.some((slug) => location.pathname === `/dashboard/settings/${slug}`)) {
       throw redirect({ to: "/dashboard/settings/general" });
