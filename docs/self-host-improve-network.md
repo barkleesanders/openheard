@@ -96,17 +96,18 @@ fail on every instance. `bun run deploy:instance` runs the gate then
 
 ## 3. Deploy, one instance at a time **[ship]**
 
-Stage is `prod`, matching upstream's `.github/workflows/deploy.yml`
-(`bunx alchemy deploy --yes --stage prod`). The default stage is
+Stage is `prod`, matching `.github/workflows/deploy.yml`, which runs the
+gated `bun run deploy:instance` entrypoint. The default Alchemy stage is
 `dev_${USER}`; do not deploy without `--stage prod` or the resources get a
 different prefix.
 
 ```bash
 cd packages/infra
 OPENHEARD_INSTANCE=aiva     bunx alchemy deploy --stage prod --dry-run   # plan only, review it
-OPENHEARD_INSTANCE=aiva     bunx alchemy deploy --stage prod
-OPENHEARD_INSTANCE=iba      bunx alchemy deploy --stage prod
-OPENHEARD_INSTANCE=cortland bunx alchemy deploy --stage prod
+cd ../..
+OPENHEARD_INSTANCE=aiva     bun run deploy:instance
+OPENHEARD_INSTANCE=iba      bun run deploy:instance
+OPENHEARD_INSTANCE=cortland bun run deploy:instance
 ```
 
 Each run provisions `openheard-<instance>-database-prod-*` (D1, migrations
