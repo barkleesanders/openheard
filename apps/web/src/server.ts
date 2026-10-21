@@ -30,7 +30,13 @@ function secure(response: Response): Response {
 
 export default {
   async fetch(request: Request, _env: unknown, ctx: ExecutionContext) {
-    return secure(await handle(request, ctx));
+    const response = secure(await handle(request, ctx));
+    const pathname = new URL(request.url).pathname;
+    if (pathname === "/updates" || pathname.startsWith("/updates/")) {
+      response.headers.set("referrer-policy", "no-referrer");
+      response.headers.set("x-robots-tag", "noindex, nofollow");
+    }
+    return response;
   },
   // Nightly: the public demo workspace goes back to its seed. Bindings come
   // from `cloudflare:workers`, which is live in a scheduled invocation too.

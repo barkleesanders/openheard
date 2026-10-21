@@ -3,13 +3,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@openheard/ui/components/input";
 import { Textarea } from "@openheard/ui/components/textarea";
 import { cn } from "@openheard/ui/lib/utils";
-import { ArrowRightIcon, RssIcon, TrashIcon } from "@phosphor-icons/react";
+import { RssIcon, TrashIcon } from "@phosphor-icons/react";
 import { createFileRoute, Link, useLoaderData, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { SkeletonSwap } from "@/components/interior/skeleton-swap";
 import { RailLabel, Shell } from "@/components/shell";
 import { ChangelogSkeleton, ErrorState } from "@/components/states";
+import { SubscriptionForm } from "@/components/subscription-form";
 import { deleteChangelog, listChangelog, saveChangelog } from "@/functions/changelog";
 import { searchPosts } from "@/functions/posts";
 
@@ -61,27 +62,7 @@ function ChangelogPage() {
           <p className="-mt-1 text-[13px] leading-[1.5] text-muted-foreground">
             One email when something ships. No digest, no marketing.
           </p>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              toast("Email updates are on the roadmap. RSS works today.");
-            }}
-            className="flex h-[34px] items-center gap-1.5 rounded-lg border border-input bg-card pr-1 pl-2.5 focus-within:border-ring/60"
-          >
-            <input
-              type="email"
-              placeholder="you@company.com"
-              aria-label="Email address"
-              className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-faint"
-            />
-            <button
-              type="submit"
-              className="inline-flex size-[26px] items-center justify-center rounded-md bg-accent text-foreground hover:bg-input"
-              aria-label="Subscribe"
-            >
-              <ArrowRightIcon weight="bold" className="size-3" />
-            </button>
-          </form>
+          <SubscriptionForm />
           <a
             href="/changelog.rss"
             className="inline-flex items-center gap-1.5 text-xs text-faint hover:text-muted-foreground"

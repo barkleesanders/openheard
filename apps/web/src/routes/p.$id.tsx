@@ -9,6 +9,7 @@ import { Avatar, StatusChip, TeamBadge } from "@/components/bits";
 import { SkeletonSwap } from "@/components/interior/skeleton-swap";
 import { RailLabel, Shell } from "@/components/shell";
 import { ErrorState, PostSkeleton } from "@/components/states";
+import { SubscriptionForm } from "@/components/subscription-form";
 import { VoteButton } from "@/components/vote-button";
 import { addComment, getPost, mergePosts, setEta } from "@/functions/posts";
 import { openSignIn } from "@/lib/pending-action";
@@ -169,6 +170,15 @@ function PostPage() {
           copiedLabel="Copied!"
         />
       </div>
+      {!p.mergedInto && current.kind !== "review" ? (
+        <section className="flex flex-col gap-2 px-2.5">
+          <RailLabel>Follow this request</RailLabel>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Get public replies, status changes, and linked release updates.
+          </p>
+          <SubscriptionForm key={p.id} postId={p.id} />
+        </section>
+      ) : null}
       {admin && p.similar.length ? (
         <section>
           <RailLabel>Also asked for</RailLabel>
