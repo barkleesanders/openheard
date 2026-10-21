@@ -1,11 +1,11 @@
-import { activity, changelogEntry, changelogPost, createDb, post } from "@openheard/db";
+import { changelogEntry, createDb } from "@openheard/db";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
-import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { z } from "zod";
 import { purgeWorkspaceCache } from "@/lib/cache";
+import { saveChangelogEntry } from "@/lib/changelog-write";
 import { requireAdmin, sessionMiddleware } from "@/lib/session";
-import { statusOfKind } from "@/lib/status-db";
 
 export const listChangelog = createServerFn({ method: "GET" })
   .middleware([sessionMiddleware])
@@ -40,80 +40,9 @@ export const saveChangelog = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const u = requireAdmin(context.user);
     const db = createDb();
-    const ws = context.workspace.id;
-    let id = data.id;
-    const values = {
-      workspaceId: ws,
-      title: data.title,
-      body: data.body,
-      version: data.version || null,
-      authorId: u.id,
-      publishedAt: data.publish ? new Date() : null,
-    };
-    // Entry and post ids are global. A scoped UPDATE that matches nothing is
-    // silent, so prove ownership of everything this touches before writing.
-    if (id) {
-      const [owned] = await db
-        .select({ id: changelogEntry.id })
-        .from(changelogEntry)
-        .where(and(eq(changelogEntry.id, id), eq(changelogEntry.workspaceId, ws)))
-        .limit(1);
-      if (!owned) throw new Error("Changelog entry not found");
-    }
-    const postIds = [...new Set(data.postIds)];
-    if (postIds.length) {
-      const owned = await db
-        .select({ id: post.id })
-        .from(post)
-        .where(and(eq(post.workspaceId, ws), inArray(post.id, postIds)));
-      if (owned.length !== postIds.length) throw new Error("Post not found");
-    }
-    if (id) {
-      await db
-        .update(changelogEntry)
-        .set(values)
-        .where(and(eq(changelogEntry.id, id), eq(changelogEntry.workspaceId, ws)));
-      await db.delete(changelogPost).where(eq(changelogPost.entryId, id));
-    } else {
-      [{ id }] = await db.insert(changelogEntry).values(values).returning({ id: changelogEntry.id });
-    }
-    const entryId = id;
-    if (entryId === undefined) throw new Error("Changelog entry was not saved");
-    if (postIds.length) {
-      await db.insert(changelogPost).values(postIds.map((postId) => ({ entryId, postId })));
-      if (data.publish) {
-        // Shipping closes the loop: linked posts move to done.
-        const linked = await db
-          .select({ id: post.id, status: post.status })
-          .from(post)
-          .where(and(eq(post.workspaceId, ws), inArray(post.id, postIds)));
-        const done = (await statusOfKind(db, ws, "done"))?.key ?? "done";
-        const toShip = linked.filter((p) => p.status !== done);
-        if (toShip.length) {
-          await db
-            .update(post)
-            .set({ status: done, statusChangedAt: new Date() })
-            .where(
-              inArray(
-                post.id,
-                toShip.map((p) => p.id),
-              ),
-            );
-          await db.insert(activity).values(
-            toShip.map((p) => ({
-              postId: p.id,
-              actorId: u.id,
-              type: "status" as const,
-              fromStatus: p.status,
-              toStatus: done,
-              note: `shipped in ${data.version || data.title}`,
-            })),
-          );
-        }
-      }
-    }
+    const result = await saveChangelogEntry(db, context.workspace.id, u.id, data);
     purgeWorkspaceCache(new URL(getRequest().url).origin);
-    return { id };
+    return result;
   });
 
 export const deleteChangelog = createServerFn({ method: "POST" })

@@ -5,6 +5,7 @@ import * as schema from "@openheard/db/schema/index";
 import { getTableColumns } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { saveChangelogEntry } from "./changelog-write";
 import { DEMO_WORKSPACE_ID } from "./demo";
 
 vi.mock("@openheard/env/server", () => ({ env: {} }));
@@ -170,6 +171,130 @@ describe("durable notification event capture", () => {
     const before = await count();
     await expect(mutateSetStatus(db, "other", created.id, "planned")).rejects.toThrow("Post not found");
     expect(await count()).toBe(before);
+  });
+  it("does not publish or mark requests shipped when a linked publication write fails", async () => {
+    const db = drizzle(client, { schema }) as unknown as Db;
+    const postId = await addPost();
+    await client.execute(
+      "INSERT INTO status (workspace_id, key, label, color, kind, position, on_roadmap) VALUES ('default', 'done', 'Shipped', '#3ecf8e', 'done', 1, 1)",
+    );
+    const release = await mutateDraftChangelog(db, "default", { title: "Failure fixture release", postIds: [postId] });
+    await client.execute(
+      "CREATE TRIGGER fail_publication_activity BEFORE INSERT ON activity BEGIN SELECT RAISE(ABORT, 'fixture activity failure'); END",
+    );
+    await expect(mutatePublishChangelog(db, "default", release.id)).rejects.toThrow();
+    expect(
+      (await client.execute({ sql: "SELECT published_at FROM changelog_entry WHERE id=?", args: [release.id] })).rows[0]
+        .published_at,
+    ).toBeNull();
+    expect((await client.execute({ sql: "SELECT status FROM post WHERE id=?", args: [postId] })).rows[0].status).toBe(
+      "open",
+    );
+    expect(
+      Number(
+        (await client.execute("SELECT COUNT(*) AS n FROM notification_event WHERE kind IN ('changelog','status')"))
+          .rows[0].n,
+      ),
+    ).toBe(0);
+  });
+  it("concurrent API publication creates one publication and one activity per linked request", async () => {
+    const db = drizzle(client, { schema }) as unknown as Db;
+    const postId = await addPost();
+    const release = await mutateDraftChangelog(db, "default", {
+      title: "Concurrent fixture release",
+      postIds: [postId],
+    });
+    const results = await Promise.allSettled([
+      mutatePublishChangelog(db, "default", release.id),
+      mutatePublishChangelog(db, "default", release.id),
+    ]);
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(Number((await client.execute("SELECT COUNT(*) AS n FROM activity")).rows[0].n)).toBe(1);
+    expect(
+      Number((await client.execute("SELECT COUNT(*) AS n FROM notification_event WHERE kind='changelog'")).rows[0].n),
+    ).toBe(1);
+  });
+  it("the browser publication helper makes links and shipped states ready before recording publication", async () => {
+    const db = drizzle(client, { schema }) as unknown as Db;
+    const ids = [await addPost(), await addPost()];
+    await client.execute("CREATE TABLE publication_observation (linked integer, unshipped integer)");
+    await client.execute(
+      "CREATE TRIGGER observe_publication AFTER INSERT ON notification_event WHEN NEW.kind='changelog' BEGIN INSERT INTO publication_observation SELECT COUNT(*), SUM(CASE WHEN p.status != 'done' THEN 1 ELSE 0 END) FROM changelog_post cp JOIN post p ON p.id=cp.post_id WHERE cp.entry_id=NEW.entity_id; END",
+    );
+    const data = { title: "Browser fixture release", body: "Public release", postIds: ids, publish: true };
+    const entry = await saveChangelogEntry(db, "default", "fixture-user", data);
+    expect((await client.execute("SELECT * FROM publication_observation")).rows[0]).toMatchObject({
+      linked: 2,
+      unshipped: 0,
+    });
+    const first = (
+      await client.execute({ sql: "SELECT published_at FROM changelog_entry WHERE id=?", args: [entry.id] })
+    ).rows[0].published_at;
+    await saveChangelogEntry(db, "default", "fixture-user", { ...data, id: entry.id, title: "Edited fixture release" });
+    expect(
+      (await client.execute({ sql: "SELECT published_at FROM changelog_entry WHERE id=?", args: [entry.id] })).rows[0]
+        .published_at,
+    ).toBe(first);
+    expect((await client.execute("SELECT * FROM publication_observation")).rows).toHaveLength(1);
+  });
+  it("a failed browser publication leaves a recoverable draft and rolls back linked changes", async () => {
+    const db = drizzle(client, { schema }) as unknown as Db;
+    const id = await addPost();
+    const data = { title: "Retry fixture release", body: "Public release", postIds: [id], publish: true };
+    await client.execute(
+      "CREATE TRIGGER fail_link BEFORE INSERT ON changelog_post BEGIN SELECT RAISE(ABORT,'fixture link failure'); END",
+    );
+    await expect(saveChangelogEntry(db, "default", "fixture-user", data)).rejects.toThrow();
+    const draft = (await client.execute("SELECT id,published_at FROM changelog_entry")).rows[0];
+    expect(draft.published_at).toBeNull();
+    expect((await client.execute("SELECT status FROM post")).rows[0].status).toBe("open");
+    expect(
+      Number((await client.execute("SELECT COUNT(*) AS n FROM notification_event WHERE kind='changelog'")).rows[0].n),
+    ).toBe(0);
+    await client.execute("DROP TRIGGER fail_link");
+    await saveChangelogEntry(db, "default", "fixture-user", { ...data, id: Number(draft.id) });
+    expect(
+      Number((await client.execute("SELECT COUNT(*) AS n FROM notification_event WHERE kind='changelog'")).rows[0].n),
+    ).toBe(1);
+  });
+  it("publishes every request at the browser's 50-link limit without exceeding D1's 100-parameter ceiling", async () => {
+    const db = drizzle(client, { schema }) as unknown as Db;
+    const ids: number[] = [];
+    for (let index = 0; index < 50; index++) ids.push(await addPost());
+    const batch = vi.spyOn(db, "batch");
+    await saveChangelogEntry(db, "default", "fixture-user", {
+      title: "Full fixture release",
+      body: "Public release",
+      postIds: ids,
+      publish: true,
+    });
+    for (const [queries] of batch.mock.calls)
+      for (const query of queries) {
+        const compiled = (query as unknown as { toSQL(): { params: unknown[] } }).toSQL();
+        expect(compiled.params.length).toBeLessThanOrEqual(100);
+      }
+    expect(Number((await client.execute("SELECT COUNT(*) AS n FROM post WHERE status='done'")).rows[0].n)).toBe(50);
+    expect(Number((await client.execute("SELECT COUNT(*) AS n FROM activity")).rows[0].n)).toBe(50);
+    expect(Number((await client.execute("SELECT COUNT(*) AS n FROM changelog_post")).rows[0].n)).toBe(50);
+  });
+  it("API publication processes larger existing link sets in parameter batches without truncation", async () => {
+    const db = drizzle(client, { schema }) as unknown as Db;
+    const release = await mutateDraftChangelog(db, "default", { title: "Legacy fixture release" });
+    for (let index = 0; index < 125; index++) {
+      const postId = await addPost();
+      await client.execute({
+        sql: "INSERT INTO changelog_post(entry_id,post_id) VALUES (?,?)",
+        args: [release.id, postId],
+      });
+    }
+    const batch = vi.spyOn(db, "batch");
+    await mutatePublishChangelog(db, "default", release.id);
+    for (const [queries] of batch.mock.calls)
+      for (const query of queries) {
+        expect((query as unknown as { toSQL(): { params: unknown[] } }).toSQL().params.length).toBeLessThanOrEqual(100);
+      }
+    expect(Number((await client.execute("SELECT COUNT(*) AS n FROM post WHERE status='done'")).rows[0].n)).toBe(125);
+    expect(Number((await client.execute("SELECT COUNT(*) AS n FROM activity")).rows[0].n)).toBe(125);
   });
   it("workspace deletion cascades notification rows after legacy content cleanup", async () => {
     await addPost();

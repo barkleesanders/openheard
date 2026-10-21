@@ -1,8 +1,9 @@
 import type { Db } from "@openheard/db";
 import { activity, board, changelogEntry, changelogPost, comment, post, status } from "@openheard/db";
 import { user } from "@openheard/db/schema/auth";
-import { and, asc, desc, eq, inArray, isNotNull, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, like, or, sql } from "drizzle-orm";
 import { ApiError } from "./api-auth";
+import { linkedPublicationWrites } from "./changelog-write";
 
 // Re-usable query logic for the HTTP API and MCP server.
 // Does NOT import from functions/* (those depend on TanStack server fns).
@@ -305,50 +306,34 @@ export async function mutatePublishChangelog(db: Db, workspaceId: string, entryI
   if (!entry) throw new ApiError(404, "Changelog entry not found");
   if (entry.publishedAt) throw new ApiError(422, "Already published");
 
-  await db.update(changelogEntry).set({ publishedAt: new Date() }).where(eq(changelogEntry.id, entryId));
-
   const linked = await db
     .select({ postId: changelogPost.postId })
     .from(changelogPost)
     .where(eq(changelogPost.entryId, entryId));
 
-  if (linked.length) {
-    const postIds = linked.map((l) => l.postId);
-    const [doneStatus] = await db
-      .select({ key: status.key })
-      .from(status)
-      .where(and(eq(status.workspaceId, workspaceId), eq(status.kind, "done")))
-      .orderBy(asc(status.position))
-      .limit(1);
-    if (doneStatus) {
-      const posts = await db
-        .select({ id: post.id, status: post.status })
-        .from(post)
-        .where(and(eq(post.workspaceId, workspaceId), inArray(post.id, postIds)));
-      const toShip = posts.filter((p) => p.status !== doneStatus.key);
-      if (toShip.length) {
-        await db
-          .update(post)
-          .set({ status: doneStatus.key, statusChangedAt: new Date() })
-          .where(
-            inArray(
-              post.id,
-              toShip.map((p) => p.id),
-            ),
-          );
-        await db.insert(activity).values(
-          toShip.map((p) => ({
-            postId: p.id,
-            actorId: null,
-            type: "status" as const,
-            fromStatus: p.status,
-            toStatus: doneStatus.key,
-            note: "shipped via changelog",
-          })),
-        );
-      }
-    }
-  }
+  const shipping = await linkedPublicationWrites(
+    db,
+    workspaceId,
+    linked.map((l) => l.postId),
+    null,
+    "shipped via changelog",
+    entryId,
+  );
+  const publication = db
+    .update(changelogEntry)
+    .set({ publishedAt: new Date() })
+    .where(
+      and(
+        eq(changelogEntry.id, entryId),
+        eq(changelogEntry.workspaceId, workspaceId),
+        isNull(changelogEntry.publishedAt),
+      ),
+    )
+    .returning({ id: changelogEntry.id });
+  const [first, ...remaining] = shipping;
+  const results = first ? await db.batch([first, ...remaining, publication]) : await db.batch([publication]);
+  const published = results.at(-1);
+  if (!Array.isArray(published) || published.length !== 1) throw new ApiError(422, "Already published");
 
   return { ok: true };
 }
